@@ -1,0 +1,23 @@
+{
+  "name": "daily-stock-pl-graph-creator",
+  "version": "1.0.0",
+  "description": "App that tracks your daily stock profit / loss with interactive ui",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gau2107/daily-stock-pl-graph-creator.git"
+  },
+  "author": "Gaurav Solanki",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gau2107/daily-stock-pl-graph-creator/issues"
+  },
+  "homepage": "https://github.com/gau2107/daily-stock-pl-graph-creator#readme",
+  "devDependencies": {
+    "electron": "^23.1.3"
+  }
+}
