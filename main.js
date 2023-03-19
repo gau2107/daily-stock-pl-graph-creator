@@ -13,7 +13,7 @@ async function createWindow() {
   );
 
   const chartData = {
-    labels: rows.map((row) => row.date),
+    labels: rows.map((row) => new Date(row.date).toDateString()),
     datasets: [
       {
         label: "Daily PL",
