@@ -8,9 +8,7 @@ async function createWindow() {
     database: "stock_portfolio",
   });
 
-  const [rows, fields] = await connection.query(
-    "SELECT * FROM daily_pl"
-  );
+  const [rows, fields] = await connection.query("SELECT * FROM daily_pl");
 
   const chartDataDailyPl = {
     labels: rows.map((row) => new Date(row.date).toDateString()),
@@ -23,7 +21,18 @@ async function createWindow() {
         borderWidth: 1,
       },
     ],
-  };;
+    options: {
+      scales: {
+        xAxes: [
+          {
+            gridLines: {
+              zeroLineColor: "rgba(199, 22, 19, 0.1)",
+            },
+          },
+        ],
+      },
+    },
+  };
 
   const chartDataCurrentValue = {
     labels: rows.map((row) => new Date(row.date).toDateString()),
@@ -57,8 +66,6 @@ async function createWindow() {
         data: ${JSON.stringify(chartDataDailyPl)}
       });
     `);
-
-    
 
     win.webContents.executeJavaScript(`
       const ctx2 = document.getElementById('current-chart').getContext('2d');
