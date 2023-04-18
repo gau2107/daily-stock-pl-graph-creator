@@ -21,17 +21,6 @@ async function createWindow() {
         borderWidth: 1,
       },
     ],
-    options: {
-      scales: {
-        xAxes: [
-          {
-            gridLines: {
-              zeroLineColor: "rgba(199, 22, 19, 0.1)",
-            },
-          },
-        ],
-      },
-    },
   };
 
   const chartDataCurrentValue = {
@@ -77,4 +66,13 @@ async function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+});
+
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
+});
