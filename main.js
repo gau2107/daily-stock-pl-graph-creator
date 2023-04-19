@@ -1,5 +1,27 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, Menu } = require("electron");
 const mysql = require("mysql2/promise");
+const path = require("path");
+
+const menuItems = [
+  {
+    label: "Window",
+    submenu: [
+      {
+        role: "minimize",
+      },
+      {
+        role: "close",
+      },
+    ],
+  },
+  {
+    label: "About",
+    onclick: () => {
+  },
+];
+
+const menu = Menu.buildFromTemplate(menuItems);
+Menu.setApplicationMenu(menu);
 async function createWindow() {
   const connection = await mysql.createConnection({
     host: "localhost",
@@ -39,9 +61,11 @@ async function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
+    icon: __dirname + "/ico.ico",
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      preload: path.join(__dirname + "/preload.js"),
     },
   });
 
