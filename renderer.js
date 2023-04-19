@@ -1,8 +1,6 @@
 const mysql = require("mysql");
 const electron = require('electron');
 
-const { ipcRenderer } = electron;
-
 // Replace the connection details with your own
 const connection = mysql.createConnection({
   host: "localhost",
