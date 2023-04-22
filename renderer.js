@@ -26,7 +26,6 @@ form.addEventListener("submit", (event) => {
       console.log(err);
       throw err;
     }
-    console.log(result);
   });
 
   // Reset form
