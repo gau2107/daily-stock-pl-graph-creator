@@ -16,7 +16,7 @@ const menuItems = [
   },
   {
     label: "About",
-    onclick: () => {
+    onclick: () => {},
   },
 ];
 
@@ -30,7 +30,7 @@ async function createWindow() {
     database: "stock_portfolio",
   });
 
-  const [rows, fields] = await connection.query("SELECT * FROM daily_pl");
+  const [rows] = await connection.query("SELECT * FROM daily_pl");
 
   const chartDataDailyPl = {
     labels: rows.map((row) => new Date(row.date).toDateString()),
