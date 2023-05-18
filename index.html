@@ -13,47 +13,77 @@
   <body>
     <div class="container">
       <h1>Daily P/L tracker</h1>
-      <form id="form">
-        <div class="mb-3">
-          <label for="datepicker" class="form-label">Date</label>
-          <input type="date" class="form-control" id="datepicker" required />
+      <div class="row">
+        <div class="col-md-6">
+          <form id="form">
+            <div class="mb-3">
+              <label for="datepicker" class="form-label">Date</label>
+              <input
+                type="date"
+                class="form-control"
+                id="datepicker"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="dailyPL" class="form-label">Daily PL</label>
+              <input
+                type="number"
+                class="form-control"
+                id="dailyPL"
+                required
+                step="0.01"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="totalPL" class="form-label">Total PL</label>
+              <input
+                type="number"
+                class="form-control"
+                id="totalPL"
+                required
+                step="0.01"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="currentValue" class="form-label">Current Value</label>
+              <input
+                type="number"
+                class="form-control"
+                id="currentValue"
+                required
+                step="0.01"
+              />
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </form>
         </div>
-        <div class="mb-3">
-          <label for="dailyPL" class="form-label">Daily PL</label>
-          <input
-            type="number"
-            class="form-control"
-            id="dailyPL"
-            required
-            step="0.01"
-          />
-        </div>
-        <div class="mb-3">
-          <label for="totalPL" class="form-label">Total PL</label>
-          <input
-            type="number"
-            class="form-control"
-            id="totalPL"
-            required
-            step="0.01"
-          />
-        </div>
-        <div class="mb-3">
-          <label for="currentValue" class="form-label">Current Value</label>
-          <input
-            type="number"
-            class="form-control"
-            id="currentValue"
-            required
-            step="0.01"
-          />
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </form>
+        <div class="col-md-6">
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">Last P/L</h5>
+              <p class="card-text" id="last-pl"></p>
+            </div>
+          </div>
 
-      <canvas id="current-chart"></canvas>
-      <canvas id="daily-chart"></canvas>
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">Highest Profit</h5>
+              <p class="card-text" id="highest-profit"></p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Lowest Profit</h5>
+              <p class="card-text" id="lowest-profit"></p>
+            </div>
+          </div>
+        </div>
+        <canvas id="current-chart"></canvas>
+        <canvas id="daily-chart"></canvas>
+      </div>
+      <script src="renderer.js"></script>
     </div>
-    <script src="renderer.js"></script>
   </body>
 </html>

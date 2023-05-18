@@ -72,6 +72,28 @@ async function createWindow() {
   win.loadFile("index.html");
 
   win.webContents.on("did-finish-load", () => {
+    // Update the highest profit, highest loss, and last PL
+    const highestPl = Math.max(...rows.map((row) => row.daily_pl));
+    win.webContents
+      .executeJavaScript(`const highestPlTag = document.getElementById("highest-profit");
+    highestPlTag.innerHTML = ${highestPl};
+    highestPlTag.style.color = 'green';
+    `);
+
+    const lowestPl = Math.min(...rows.map((row) => row.daily_pl));
+    win.webContents
+      .executeJavaScript(`const lowestPlTag = document.getElementById("lowest-profit");
+    lowestPlTag.innerHTML = ${lowestPl};
+    lowestPlTag.style.color = 'red';
+    `);
+
+    const lastPl = rows[rows.length - 1].daily_pl;
+    win.webContents
+      .executeJavaScript(`const lastPlTag = document.getElementById("last-pl");
+    lastPlTag.innerHTML = ${lastPl};
+    lastPlTag.style.color = ${lastPl > 0 ? "'green'" : "'red'"};
+    `);
+
     win.webContents.executeJavaScript(`
       const ctx = document.getElementById('daily-chart').getContext('2d');
       new Chart(ctx, {
