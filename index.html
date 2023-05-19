@@ -14,7 +14,7 @@
     <div class="container">
       <h1>Daily P/L tracker</h1>
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <form id="form">
             <div class="mb-3">
               <label for="datepicker" class="form-label">Date</label>
@@ -58,8 +58,8 @@
             <button type="submit" class="btn btn-primary">Submit</button>
           </form>
         </div>
-        <div class="col-md-6">
-          <div class="card mb-3">
+        <div class="col-md-4">
+          <div class="card mb-3 mt-3">
             <div class="card-body">
               <h5 class="card-title">Last P/L</h5>
               <p class="card-text" id="last-pl"></p>
@@ -77,6 +77,28 @@
             <div class="card-body">
               <h5 class="card-title">Lowest Profit</h5>
               <p class="card-text" id="lowest-profit"></p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card mb-3 mt-3">
+            <div class="card-body">
+              <h5 class="card-title">Streak</h5>
+              <p class="card-text" id="streak"></p>
+            </div>
+          </div>
+
+          <div class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">Highest Value</h5>
+              <p class="card-text" id="highest-value"></p>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">Lowest Value</h5>
+              <p class="card-text" id="lowest-value"></p>
             </div>
           </div>
         </div>

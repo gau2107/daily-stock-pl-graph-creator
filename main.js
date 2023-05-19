@@ -72,7 +72,7 @@ async function createWindow() {
   win.loadFile("index.html");
 
   win.webContents.on("did-finish-load", () => {
-    // Update the highest profit, highest loss, and last PL
+    // get the highest profit, lowest profit, and last PL
     const highestPl = Math.max(...rows.map((row) => row.daily_pl));
     win.webContents
       .executeJavaScript(`const highestPlTag = document.getElementById("highest-profit");
@@ -92,6 +92,46 @@ async function createWindow() {
       .executeJavaScript(`const lastPlTag = document.getElementById("last-pl");
     lastPlTag.innerHTML = ${lastPl};
     lastPlTag.style.color = ${lastPl > 0 ? "'green'" : "'red'"};
+    `);
+
+    // get the highest value, lowest value & streak 
+    const highestValue = Math.max(...rows.map((row) => row.current_value));
+    win.webContents
+      .executeJavaScript(`const highestValueTag = document.getElementById("highest-value");
+    highestValueTag.innerHTML = ${highestValue};
+    highestValueTag.style.color = 'green';
+    `);
+
+    const lowestValue = Math.min(...rows.map((row) => row.current_value));
+    win.webContents
+      .executeJavaScript(`const lowestValueTag = document.getElementById("lowest-value");
+    lowestValueTag.innerHTML = ${lowestValue};
+    lowestPlTag.style.color = 'red';
+    `);
+
+    // find the streak
+    let streakType;
+    let currentStreak = 0;
+    for (let i = rows.length - 1; i > 0; i--) {
+        if (streakType === "green" && rows[i].daily_pl < 0) {
+          break;
+        }
+        if (streakType === "red" && rows[i].daily_pl > 0) {
+          break;
+        }
+      if (rows[i].daily_pl > 0) {
+        currentStreak += 1;
+        streakType = "green";
+      } else {
+        currentStreak += 1;
+        streakType = "red";
+      }
+    }
+
+    win.webContents
+      .executeJavaScript(`const streakTag = document.getElementById("streak");
+    streakTag.innerHTML = ${currentStreak};
+    streakTag.style.color = "${streakType}";
     `);
 
     win.webContents.executeJavaScript(`
