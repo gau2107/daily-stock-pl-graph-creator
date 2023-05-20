@@ -94,7 +94,7 @@ async function createWindow() {
     lastPlTag.style.color = ${lastPl > 0 ? "'green'" : "'red'"};
     `);
 
-    // get the highest value, lowest value & streak 
+    // get the highest value, lowest value & streak
     const highestValue = Math.max(...rows.map((row) => row.current_value));
     win.webContents
       .executeJavaScript(`const highestValueTag = document.getElementById("highest-value");
@@ -113,12 +113,12 @@ async function createWindow() {
     let streakType;
     let currentStreak = 0;
     for (let i = rows.length - 1; i > 0; i--) {
-        if (streakType === "green" && rows[i].daily_pl < 0) {
-          break;
-        }
-        if (streakType === "red" && rows[i].daily_pl > 0) {
-          break;
-        }
+      if (streakType === "green" && rows[i].daily_pl < 0) {
+        break;
+      }
+      if (streakType === "red" && rows[i].daily_pl > 0) {
+        break;
+      }
       if (rows[i].daily_pl > 0) {
         currentStreak += 1;
         streakType = "green";
@@ -133,6 +133,26 @@ async function createWindow() {
     streakTag.innerHTML = ${currentStreak};
     streakTag.style.color = "${streakType}";
     `);
+
+    // compare last week to this week
+    const lastWeekPl = rows[rows.length - 7].daily_pl;
+    const plDifference = lastPl - lastWeekPl;
+
+    win.webContents
+      .executeJavaScript(`const lastWeekChange = document.getElementById("last-week-change");
+     lastWeekChange.innerHTML = ${plDifference};
+     lastWeekChange.style.color = "${plDifference > 0 ? "green" : "red"}";
+     `);
+
+    // compare last month to this month
+    const lastMonthPl = rows[rows.length - 30].daily_pl;
+    const monthPlDifference = lastPl - lastMonthPl;
+
+    win.webContents
+      .executeJavaScript(`const lastMonthChange = document.getElementById("last-month-change");
+     lastMonthChange.innerHTML = ${monthPlDifference.toFixed(2)};
+     lastMonthChange.style.color = "${monthPlDifference > 0 ? "green" : "red"}";
+     `);
 
     win.webContents.executeJavaScript(`
       const ctx = document.getElementById('daily-chart').getContext('2d');
