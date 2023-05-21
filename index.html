@@ -10,12 +10,12 @@
     />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
-  <body>
+  <body style="background-color: whitesmoke;">
     <div class="container">
       <h1>Daily P/L tracker</h1>
       <div class="row">
         <div class="col-md-4">
-          <form id="form">
+          <form id="form" class="mb-3">
             <div class="mb-3">
               <label for="datepicker" class="form-label">Date</label>
               <input
@@ -73,7 +73,7 @@
             </div>
           </div>
 
-          <div class="card">
+          <div class="card mb-3">
             <div class="card-body">
               <h5 class="card-title">Lowest Profit</h5>
               <p class="card-text" id="lowest-profit"></p>
@@ -87,7 +87,7 @@
             </div>
           </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 mb-3">
           <div class="card mb-3 mt-3">
             <div class="card-body">
               <h5 class="card-title">Streak</h5>
@@ -102,7 +102,7 @@
             </div>
           </div>
 
-          <div class="card">
+          <div class="card mb-3">
             <div class="card-body">
               <h5 class="card-title">Lowest Value</h5>
               <p class="card-text" id="lowest-value"></p>
