@@ -136,8 +136,9 @@ async function createWindow() {
     `);
 
     // compare last week to this week
-    const lastWeekPl = rows[rows.length - 7].daily_pl;
-    const plDifference = lastPl - lastWeekPl;
+    const lastValue = rows[rows.length - 1].current_value;
+    const lastWeekPl = rows[rows.length - 7].current_value;
+    const plDifference = lastValue - lastWeekPl;
 
     win.webContents
       .executeJavaScript(`const lastWeekChange = document.getElementById("last-week-change");
@@ -146,8 +147,8 @@ async function createWindow() {
      `);
 
     // compare last month to this month
-    const lastMonthPl = rows[rows.length - 30].daily_pl;
-    const monthPlDifference = lastPl - lastMonthPl;
+    const lastMonthPl = rows[rows.length - 30].current_value;
+    const monthPlDifference = lastValue - lastMonthPl;
 
     win.webContents
       .executeJavaScript(`const lastMonthChange = document.getElementById("last-month-change");
