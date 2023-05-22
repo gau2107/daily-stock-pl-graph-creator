@@ -132,6 +132,7 @@ async function createWindow() {
     win.webContents
       .executeJavaScript(`const streakTag = document.getElementById("streak");
     streakTag.innerHTML = ${currentStreak};
+    streakTag.innerHTML += ${streakType === "green" ? "' 📈'" : "' 📉'"};
     streakTag.style.color = "${streakType}";
     `);
 
