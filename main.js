@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu } = require("electron");
+const { app, BrowserWindow, Menu, screen } = require("electron");
 const mysql = require("mysql2/promise");
 const path = require("path");
 
@@ -23,6 +23,7 @@ const menuItems = [
 const menu = Menu.buildFromTemplate(menuItems);
 Menu.setApplicationMenu(menu);
 async function createWindow() {
+  
   const connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -58,9 +59,11 @@ async function createWindow() {
     ],
   };
 
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: width,
+    height: height,
     icon: __dirname + "/ico.ico",
     webPreferences: {
       nodeIntegration: true,
@@ -68,7 +71,6 @@ async function createWindow() {
       preload: path.join(__dirname + "/preload.js"),
     },
   });
-  win.maximize();
 
   win.loadFile("index.html");
 
@@ -143,7 +145,7 @@ async function createWindow() {
 
     win.webContents
       .executeJavaScript(`const lastWeekChange = document.getElementById("last-week-change");
-     lastWeekChange.innerHTML = ${plDifference};
+     lastWeekChange.innerHTML = ${plDifference.toFixed(2)};
      lastWeekChange.style.color = "${plDifference > 0 ? "green" : "red"}";
      `);
 
