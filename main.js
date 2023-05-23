@@ -23,7 +23,6 @@ const menuItems = [
 const menu = Menu.buildFromTemplate(menuItems);
 Menu.setApplicationMenu(menu);
 async function createWindow() {
-  
   const connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -39,8 +38,8 @@ async function createWindow() {
       {
         label: "Daily PL",
         data: rows.map((row) => row.daily_pl),
-        borderColor: "rgba(255, 99, 132, 1)",
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        borderColor: "rgba(5, 99, 132, 1)",
+        backgroundColor: "rgba(6, 99, 132, 0.2)",
         borderWidth: 1,
       },
     ],
@@ -52,24 +51,28 @@ async function createWindow() {
       {
         label: "Current Value",
         data: rows.map((row) => row.current_value),
-        borderColor: "rgba(255, 99, 132, 1)",
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        borderColor: "rgba(5, 99, 132, 1)",
+        backgroundColor: "rgba(6, 99, 132, 0.2)",
         borderWidth: 1,
       },
     ],
   };
 
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-
   const win = new BrowserWindow({
-    width: width,
-    height: height,
+    width: 800,
+    height: 600,
+    show: false,
     icon: __dirname + "/ico.ico",
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
       preload: path.join(__dirname + "/preload.js"),
     },
+  });
+
+  win.once("ready-to-show", () => {
+    win.maximize();
+    win.show();
   });
 
   win.loadFile("index.html");
