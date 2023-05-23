@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu } = require("electron");
+const { app, BrowserWindow, Menu, screen } = require("electron");
 const mysql = require("mysql2/promise");
 const path = require("path");
 
@@ -38,8 +38,8 @@ async function createWindow() {
       {
         label: "Daily PL",
         data: rows.map((row) => row.daily_pl),
-        borderColor: "rgba(255, 99, 132, 1)",
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        borderColor: "rgba(5, 99, 132, 1)",
+        backgroundColor: "rgba(6, 99, 132, 0.2)",
         borderWidth: 1,
       },
     ],
@@ -51,8 +51,8 @@ async function createWindow() {
       {
         label: "Current Value",
         data: rows.map((row) => row.current_value),
-        borderColor: "rgba(255, 99, 132, 1)",
-        backgroundColor: "rgba(255, 99, 132, 0.2)",
+        borderColor: "rgba(5, 99, 132, 1)",
+        backgroundColor: "rgba(6, 99, 132, 0.2)",
         borderWidth: 1,
       },
     ],
@@ -61,6 +61,7 @@ async function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
+    show: false,
     icon: __dirname + "/ico.ico",
     webPreferences: {
       nodeIntegration: true,
@@ -68,7 +69,11 @@ async function createWindow() {
       preload: path.join(__dirname + "/preload.js"),
     },
   });
-  win.maximize();
+
+  win.once("ready-to-show", () => {
+    win.maximize();
+    win.show();
+  });
 
   win.loadFile("index.html");
 
@@ -143,7 +148,7 @@ async function createWindow() {
 
     win.webContents
       .executeJavaScript(`const lastWeekChange = document.getElementById("last-week-change");
-     lastWeekChange.innerHTML = ${plDifference};
+     lastWeekChange.innerHTML = ${plDifference.toFixed(2)};
      lastWeekChange.style.color = "${plDifference > 0 ? "green" : "red"}";
      `);
 
