@@ -100,6 +100,13 @@ async function createWindow() {
     lastPlTag.style.color = ${lastPl > 0 ? "'green'" : "'red'"};
     `);
 
+    const totalPl = rows[rows.length - 1].total_pl;
+    win.webContents
+      .executeJavaScript(`const totalPlTag = document.getElementById("total-pl");
+    totalPlTag.innerHTML = ${totalPl};
+    totalPlTag.style.color = ${totalPl > 0 ? "'green'" : "'red'"};
+    `);
+
     // get the highest value, lowest value & streak
     const highestValue = Math.max(...rows.map((row) => row.current_value));
     win.webContents
@@ -153,7 +160,8 @@ async function createWindow() {
      `);
 
     // compare last month to this month
-    const lastMonthPl = rows[rows.length - 30].current_value;
+    const lastMonthPl =
+      rows[rows.length - 30]?.current_value || rows[0].current_value;
     const monthPlDifference = lastValue - lastMonthPl;
 
     win.webContents
@@ -161,6 +169,20 @@ async function createWindow() {
      lastMonthChange.innerHTML = ${monthPlDifference.toFixed(2)};
      lastMonthChange.style.color = "${monthPlDifference > 0 ? "green" : "red"}";
      `);
+
+    const lastYearCurrentValue =
+      rows[rows.length - 260]?.current_value || rows[0].current_value;
+    const yearPlDifference = (lastValue - lastYearCurrentValue).toFixed(2);
+    const yearPercent = (
+      (yearPlDifference * 100) /
+      lastYearCurrentValue
+    ).toFixed(2);
+    win.webContents
+      .executeJavaScript(`const lastYearReturns = document.getElementById("1-year-returns");
+      lastYearReturns.innerHTML = ${yearPlDifference};
+      lastYearReturns.innerHTML = lastYearReturns.innerHTML + " "+"("+${yearPercent}+"%)";        
+      lastYearReturns.style.color = "${yearPlDifference > 0 ? "green" : "red"}";
+      `);
 
     win.webContents.executeJavaScript(`
       const ctx = document.getElementById('daily-chart').getContext('2d');
