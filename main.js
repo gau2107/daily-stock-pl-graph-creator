@@ -94,16 +94,23 @@ async function createWindow() {
     `);
 
     const lastPl = rows[rows.length - 1].daily_pl;
+    const lastPlPercent = (
+      (lastPl * 100) /
+      rows[rows.length - 2].current_value
+    ).toFixed(2);
     win.webContents
       .executeJavaScript(`const lastPlTag = document.getElementById("last-pl");
     lastPlTag.innerHTML = ${lastPl};
+    lastPlTag.innerHTML = lastPlTag.innerHTML + " "+"("+${lastPlPercent}+"%)";        
     lastPlTag.style.color = ${lastPl > 0 ? "'green'" : "'red'"};
     `);
 
     const totalPl = rows[rows.length - 1].total_pl;
+    const totalPlPercent = ((totalPl * 100) / rows[0].current_value).toFixed(2);
     win.webContents
       .executeJavaScript(`const totalPlTag = document.getElementById("total-pl");
     totalPlTag.innerHTML = ${totalPl};
+    totalPlTag.innerHTML = totalPlTag.innerHTML + " "+"("+${totalPlPercent}+"%)";        
     totalPlTag.style.color = ${totalPl > 0 ? "'green'" : "'red'"};
     `);
 
@@ -163,10 +170,15 @@ async function createWindow() {
     const lastMonthPl =
       rows[rows.length - 30]?.current_value || rows[0].current_value;
     const monthPlDifference = lastValue - lastMonthPl;
+    const lastMonthPlPercent = (
+      (monthPlDifference * 100) /
+      lastMonthPl
+    ).toFixed(2);
 
     win.webContents
       .executeJavaScript(`const lastMonthChange = document.getElementById("last-month-change");
      lastMonthChange.innerHTML = ${monthPlDifference.toFixed(2)};
+     lastMonthChange.innerHTML = lastMonthChange.innerHTML + " "+"("+${lastMonthPlPercent}+"%)";        
      lastMonthChange.style.color = "${monthPlDifference > 0 ? "green" : "red"}";
      `);
 
