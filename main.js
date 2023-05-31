@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, screen } = require("electron");
+const { app, BrowserWindow, Menu, shell } = require("electron");
 const mysql = require("mysql2/promise");
 const path = require("path");
 
@@ -16,7 +16,9 @@ const menuItems = [
   },
   {
     label: "About",
-    onclick: () => {},
+    click: async () => {
+      await shell.openExternal("https://gsolanki.vercel.app/");
+    },
   },
 ];
 
