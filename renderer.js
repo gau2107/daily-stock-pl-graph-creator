@@ -1,5 +1,5 @@
 const mysql = require("mysql");
-const electron = require('electron');
+const { ipcRenderer } = require("electron");
 
 // Replace the connection details with your own
 const connection = mysql.createConnection({
@@ -26,6 +26,7 @@ form.addEventListener("submit", (event) => {
       console.log(err);
       throw err;
     }
+    ipcRenderer.send("reload-app");
   });
 
   // Reset form

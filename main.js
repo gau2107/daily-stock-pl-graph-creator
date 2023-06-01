@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell } = require("electron");
+const { app, BrowserWindow, Menu, shell, ipcMain } = require("electron");
 const mysql = require("mysql2/promise");
 const path = require("path");
 
@@ -32,34 +32,6 @@ async function createWindow() {
     database: "stock_portfolio",
   });
 
-  const [rows] = await connection.query("SELECT * FROM daily_pl");
-
-  const chartDataDailyPl = {
-    labels: rows.map((row) => new Date(row.date).toDateString()),
-    datasets: [
-      {
-        label: "Daily PL",
-        data: rows.map((row) => row.daily_pl),
-        borderColor: "rgba(5, 99, 132, 1)",
-        backgroundColor: "rgba(6, 99, 132, 0.2)",
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const chartDataCurrentValue = {
-    labels: rows.map((row) => new Date(row.date).toDateString()),
-    datasets: [
-      {
-        label: "Current Value",
-        data: rows.map((row) => row.current_value),
-        borderColor: "rgba(5, 99, 132, 1)",
-        backgroundColor: "rgba(6, 99, 132, 0.2)",
-        borderWidth: 1,
-      },
-    ],
-  };
-
   const win = new BrowserWindow({
     width: 800,
     height: 600,
@@ -78,8 +50,41 @@ async function createWindow() {
   });
 
   win.loadFile("index.html");
+  // win.webContents.openDevTools();
 
-  win.webContents.on("did-finish-load", () => {
+  ipcMain.on("reload-app", async () => {
+    [rows] = await connection.query("SELECT * FROM daily_pl");
+    win.reload();
+  });
+
+  win.webContents.on("did-finish-load", async () => {
+    let [rows] = await connection.query("SELECT * FROM daily_pl");
+
+    const chartDataDailyPl = {
+      labels: rows.map((row) => new Date(row.date).toDateString()),
+      datasets: [
+        {
+          label: "Daily PL",
+          data: rows.map((row) => row.daily_pl),
+          borderColor: "rgba(5, 99, 132, 1)",
+          backgroundColor: "rgba(6, 99, 132, 0.2)",
+          borderWidth: 1,
+        },
+      ],
+    };
+
+    const chartDataCurrentValue = {
+      labels: rows.map((row) => new Date(row.date).toDateString()),
+      datasets: [
+        {
+          label: "Current Value",
+          data: rows.map((row) => row.current_value),
+          borderColor: "rgba(5, 99, 132, 1)",
+          backgroundColor: "rgba(6, 99, 132, 0.2)",
+          borderWidth: 1,
+        },
+      ],
+    };
     // get the highest profit, lowest profit, and last PL
     const highestPl = Math.max(...rows.map((row) => row.daily_pl));
     win.webContents
@@ -124,12 +129,12 @@ async function createWindow() {
     highestValueTag.style.color = 'green';
     `);
 
-    const lowestValue = Math.min(...rows.map((row) => row.current_value));
-    win.webContents
-      .executeJavaScript(`const lowestValueTag = document.getElementById("lowest-value");
-    lowestValueTag.innerHTML = ${lowestValue};
-    lowestPlTag.style.color = 'red';
-    `);
+    // const lowestValue = Math.min(...rows.map((row) => row.current_value));
+    // win.webContents
+    //   .executeJavaScript(`const lowestValueTag = document.getElementById("lowest-value");
+    // lowestValueTag.innerHTML = ${lowestValue};
+    // lowestPlTag.style.color = 'red';
+    // `);
 
     // find the streak
     let streakType;
