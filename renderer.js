@@ -15,9 +15,9 @@ form.addEventListener("submit", (event) => {
 
   // Get form data
   const date = document.getElementById("datepicker").value;
-  const dailyPL = document.getElementById("dailyPL").value;
-  const totalPL = document.getElementById("totalPL").value;
-  const currentValue = document.getElementById("currentValue").value;
+  const dailyPL = document.getElementById("daily-pl").value;
+  const totalPL = document.getElementById("total-pl-input").value;
+  const currentValue = document.getElementById("current-value").value;
 
   // Save form data to MySQL database
   const query = `INSERT INTO daily_pl (date, daily_pl, total_pl, current_value) VALUES ('${date}', ${dailyPL}, ${totalPL}, ${currentValue})`;
