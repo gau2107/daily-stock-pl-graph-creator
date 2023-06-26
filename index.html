@@ -110,8 +110,87 @@
 
       <canvas id="current-chart"></canvas>
       <canvas id="daily-chart"></canvas>
+      <div class="mt-5"></div>
+      <h1>Historic Data</h1>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Daily PL</th>
+            <th scope="col">Total PL</th>
+            <th scope="col">Current Value</th>
+          </tr>
+        </thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+      <nav>
+        <ul class="pagination justify-content-center" id="pagination"></ul>
+      </nav>
     </div>
     <script src="renderer.js"></script>
+    <script>
+      // Function to display data in the HTML table with pagination
+      function displayData(data) {
+        const itemsPerPage = 10; // Number of items to display per page
+        const dataBody = document.getElementById('dataBody');
+        const pagination = document.getElementById('pagination');
+
+        // Calculate the number of pages
+        const totalPages = Math.ceil(data.length / itemsPerPage);
+
+        // Function to display a specific page
+        function displayPage(pageNumber) {
+          dataBody.innerHTML = ''; // Clear the table body
+
+          // Calculate the starting and ending index of the items for the current page
+          const startIndex = (pageNumber - 1) * itemsPerPage;
+          const endIndex = startIndex + itemsPerPage;
+
+          // Loop through the items of the current page and populate the table
+          for (let i = startIndex; i < endIndex && i < data.length; i++) {
+            const row = document.createElement('tr');
+
+            // Loop through each key in the object
+            for (const key in data[i]) {
+              if (key != 'id') {
+                if(key === 'date')
+                data[i][key] = new Date(data[i][key]).toDateString()
+                const cell = document.createElement('td');
+                cell.style.color = data[i].daily_pl > 0 ? 'green' : 'red';
+                cell.textContent = data[i][key];
+                row.appendChild(cell);
+              }
+
+            }
+
+            dataBody.appendChild(row);
+          }
+        }
+
+        // Function to create pagination links
+        function createPaginationLinks() {
+          pagination.innerHTML = ''; // Clear the pagination links
+
+          // Create and append the pagination links
+          for (let i = 1; i <= totalPages; i++) {
+            const link = document.createElement('li');
+            link.classList.add('page-item');
+            link.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+            link.addEventListener('click', (event) => {
+              event.preventDefault(); // Prevent the default behavior of the click event
+              displayPage(i);
+            });
+            pagination.appendChild(link);
+          }
+        }
+
+        // Display the first page initially
+        displayPage(1);
+
+        // Create the pagination links
+        createPaginationLinks();
+      }
+    </script>
   </div>
 </body>
 
