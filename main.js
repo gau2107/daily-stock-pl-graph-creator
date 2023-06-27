@@ -85,8 +85,13 @@ async function createWindow() {
         },
       ],
     };
-      const tableData = [...rows].reverse();
-      win.webContents.executeJavaScript(`displayData(${JSON.stringify(tableData)})`)
+
+    // display history data
+    const tableData = [...rows].reverse();
+    win.webContents.executeJavaScript(
+      `displayData(${JSON.stringify(tableData)})`
+    );
+
     // get the highest profit, lowest profit, and last PL
     const highestPl = Math.max(...rows.map((row) => row.daily_pl));
     win.webContents

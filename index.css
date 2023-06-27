@@ -1,0 +1,50 @@
+/* styles.css */
+
+.contribution-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  background-color: #f6f8fa;
+  padding: 20px;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+}
+
+.contribution-box {
+  width: 12px;
+  height: 12px;
+  margin: 2px;
+  background-color: #ebedf0;
+}
+
+.contribution-box.active {
+  background-color: #c6e48b;
+}
+
+.contribution-box.medium {
+  background-color: #7bc96f;
+}
+
+.contribution-box.high {
+  background-color: #239a3b;
+}
+
+.contribution-box.very-high {
+  background-color: #196127;
+}
+.contribution-box.low {
+  background-color: #ffcccc;
+}
+
+.contribution-box.medium-low {
+  background-color: #ff9999;
+}
+
+.contribution-box.very-low {
+  background-color: #ff6666;
+}
+
+.contribution-box.very-very-low {
+  background-color: #ff3333;
+}
