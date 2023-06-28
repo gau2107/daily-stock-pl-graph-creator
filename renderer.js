@@ -18,9 +18,10 @@ form.addEventListener("submit", (event) => {
   const dailyPL = document.getElementById("daily-pl").value;
   const totalPL = document.getElementById("total-pl-input").value;
   const currentValue = document.getElementById("current-value").value;
+  const nifty = document.getElementById("nifty-50").value;
 
   // Save form data to MySQL database
-  const query = `INSERT INTO daily_pl (date, daily_pl, total_pl, current_value) VALUES ('${date}', ${dailyPL}, ${totalPL}, ${currentValue})`;
+  const query = `INSERT INTO daily_pl (date, daily_pl, total_pl, current_value, nifty_50) VALUES ('${date}', ${dailyPL}, ${totalPL}, ${currentValue}, ${nifty})`;
   connection.query(query, (err, result) => {
     if (err) {
       console.log(err);

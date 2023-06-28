@@ -32,6 +32,10 @@
             <label for="current-value" class="form-label">Current value</label>
             <input type="number" class="form-control" id="current-value" required step="0.01" />
           </div>
+          <div class="mb-3">
+            <label for="nifty-50" class="form-label">Nifty 50</label>
+            <input type="number" class="form-control" id="nifty-50" required step="0.01" />
+          </div>
           <button type="submit" class="btn btn-dark">Submit</button>
         </form>
       </div>
@@ -111,6 +115,9 @@
 
       <canvas id="current-chart"></canvas>
       <canvas id="daily-chart"></canvas>
+
+      <canvas id="nifty-chart"></canvas>
+
       <div class="mt-5"></div>
       <div id="contributionDiv" class="contribution-container"></div>
       <h1>Historic Data</h1>
@@ -121,6 +128,7 @@
             <th scope="col">Daily PL</th>
             <th scope="col">Total PL</th>
             <th scope="col">Current Value</th>
+            <th scope="col">Nifty 50</th>
           </tr>
         </thead>
         <tbody id="dataBody"></tbody>

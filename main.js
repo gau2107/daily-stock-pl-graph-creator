@@ -210,6 +210,33 @@ async function createWindow() {
       lastYearReturns.style.color = "${yearPlDifference > 0 ? "green" : "red"}";
       `);
 
+    const niftyData = {
+      labels: rows.map((row) => new Date(row.date).toDateString()),
+      datasets: [
+        {
+          label: "Nifty",
+          data: rows.map(
+            (row) =>
+              ((row.nifty_50 - rows[0].nifty_50) * 100) / rows[0].nifty_50
+          ),
+          borderColor: "rgba(200, 99, 132, 1)",
+          backgroundColor: "rgba(200, 99, 132, 0.2)",
+          borderWidth: 1,
+        },
+        {
+          label: "Total P/L",
+          data: rows.map(
+            (row) =>
+              ((row.current_value - rows[0].current_value) * 100) /
+              rows[0].current_value
+          ),
+          borderColor: "rgba(100, 99, 132, 1)",
+          backgroundColor: "rgba(100, 99, 132, 0.2)",
+          borderWidth: 1,
+        },
+      ],
+    };
+
     win.webContents.executeJavaScript(`
       const ctx = document.getElementById('daily-chart').getContext('2d');
       new Chart(ctx, {
@@ -225,6 +252,14 @@ async function createWindow() {
         data: ${JSON.stringify(chartDataCurrentValue)}
       });
     `);
+
+    win.webContents.executeJavaScript(`
+    const ctx3 = document.getElementById('nifty-chart').getContext('2d');
+    new Chart(ctx3, {
+      type: 'line',
+      data: ${JSON.stringify(niftyData)},
+    });
+  `);
   });
 }
 
