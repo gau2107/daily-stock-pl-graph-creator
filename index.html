@@ -119,8 +119,9 @@
       <canvas id="nifty-chart"></canvas>
 
       <div class="mt-5"></div>
-      <div id="contributionDiv" class="contribution-container"></div>
       <h1>Historic Data</h1>
+      <div id="contributionDiv" class="contribution-container"></div>
+
       <table class="table">
         <thead>
           <tr>
@@ -140,7 +141,7 @@
     <script src="renderer.js"></script>
     <script>
       // Function to display data in the HTML table with pagination
-      function displayData(data) {
+      function displayData(parentData) {
         const itemsPerPage = 10; // Number of items to display per page
         const dataBody = document.getElementById('dataBody');
         const pagination = document.getElementById('pagination');
@@ -148,10 +149,12 @@
         const contributionDiv = document.getElementById('contributionDiv');
 
         // Calculate the number of pages
-        const totalPages = Math.ceil(data.length / itemsPerPage);
+        const totalPages = Math.ceil(parentData.length / itemsPerPage);
 
         // Function to display a specific page
         function displayPage(pageNumber) {
+          let data = JSON.parse(JSON.stringify(parentData))
+
           dataBody.innerHTML = ''; // Clear the table body
           contributionDiv.innerHTML = ''; // Clear the div body
 
@@ -175,11 +178,11 @@
 
                 else {
                   cell.style.color = data[i].nifty_50 > data[i + 1]?.nifty_50 ? 'green' : 'red';
-                  data[i][key] = `${data[i][key]} (${((data[i]?.nifty_50 - data[i + 1]?.nifty_50) * 100 / data[i + 1]?.nifty_50).toFixed(2)}%)`
+                  data[i][key] = `${data[i][key]} (${((data[i]?.nifty_50 - data[i + 1]?.nifty_50 || 0) * 100 / data[i + 1]?.nifty_50 || 1).toFixed(2)}%)`
                 }
 
                 if (key === 'current_value')
-                  data[i][key] = `${data[i][key]} (${((data[i]?.current_value - data[i + 1]?.current_value) * 100 / data[i + 1]?.current_value).toFixed(2)}%)`
+                  data[i][key] = `${data[i][key]} (${((data[i]?.current_value - data[i + 1]?.current_value || 0) * 100 / data[i + 1]?.current_value || 1).toFixed(2)}%)`
 
 
                 cell.textContent = data[i][key];

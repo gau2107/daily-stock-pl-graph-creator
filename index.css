@@ -5,10 +5,9 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  background-color: #f6f8fa;
   padding: 20px;
-  border: 1px solid #e1e4e8;
   border-radius: 6px;
+  margin-bottom: 1rem;
 }
 
 .contribution-box {
