@@ -66,8 +66,8 @@ async function createWindow() {
         {
           label: "Daily PL",
           data: rows.map((row) => row.daily_pl),
-          borderColor: "rgba(5, 99, 132, 1)",
-          backgroundColor: "rgba(6, 99, 132, 0.2)",
+          borderColor: "rgba(255, 110, 100, 1)",
+          backgroundColor: "rgba(255, 110, 100, 0.2)",
           borderWidth: 1,
         },
       ],
@@ -79,8 +79,8 @@ async function createWindow() {
         {
           label: "Current Value",
           data: rows.map((row) => row.current_value),
-          borderColor: "rgba(5, 99, 132, 1)",
-          backgroundColor: "rgba(6, 99, 132, 0.2)",
+          borderColor: "rgba(100, 150, 200, 1)",
+          backgroundColor: "rgba(100, 150, 200, 0.2)",
           borderWidth: 1,
         },
       ],
@@ -135,13 +135,6 @@ async function createWindow() {
     highestValueTag.innerHTML = ${highestValue};
     highestValueTag.style.color = 'green';
     `);
-
-    // const lowestValue = Math.min(...rows.map((row) => row.current_value));
-    // win.webContents
-    //   .executeJavaScript(`const lowestValueTag = document.getElementById("lowest-value");
-    // lowestValueTag.innerHTML = ${lowestValue};
-    // lowestPlTag.style.color = 'red';
-    // `);
 
     // find the streak
     let streakType;
@@ -219,8 +212,8 @@ async function createWindow() {
             (row) =>
               ((row.nifty_50 - rows[0].nifty_50) * 100) / rows[0].nifty_50
           ),
-          borderColor: "rgba(200, 99, 132, 1)",
-          backgroundColor: "rgba(200, 99, 132, 0.2)",
+          borderColor: "rgba(50, 99, 132, 1)",
+          backgroundColor: "rgba(50, 99, 132, 0.2)",
           borderWidth: 1,
         },
         {
@@ -240,7 +233,7 @@ async function createWindow() {
     win.webContents.executeJavaScript(`
       const ctx = document.getElementById('daily-chart').getContext('2d');
       new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: ${JSON.stringify(chartDataDailyPl)}
       });
     `);

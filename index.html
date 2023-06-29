@@ -170,7 +170,18 @@
                   data[i][key] = new Date(data[i][key]).toDateString()
 
                 const cell = document.createElement('td');
-                cell.style.color = data[i].daily_pl > 0 ? 'green' : 'red';
+                if (key !== 'nifty_50')
+                  cell.style.color = data[i].daily_pl > 0 ? 'green' : 'red';
+
+                else {
+                  cell.style.color = data[i].nifty_50 > data[i + 1]?.nifty_50 ? 'green' : 'red';
+                  data[i][key] = `${data[i][key]} (${((data[i]?.nifty_50 - data[i + 1]?.nifty_50) * 100 / data[i + 1]?.nifty_50).toFixed(2)}%)`
+                }
+
+                if (key === 'current_value')
+                  data[i][key] = `${data[i][key]} (${((data[i]?.current_value - data[i + 1]?.current_value) * 100 / data[i + 1]?.current_value).toFixed(2)}%)`
+
+
                 cell.textContent = data[i][key];
                 row.appendChild(cell);
 
@@ -189,16 +200,16 @@
         }
 
         function getClass(val) {
-          if (val > 0 && val < 150) return 'active'
-          else if (val > 150 && val < 300) return 'medium'
-          else if (val > 300 && val < 450) return 'high'
-          else if (val > 450) return 'very-high'
-          else if (val > -150 && val < 0) return 'low'
-          else if (val > -300 && val < -150) return 'medium-low'
-          else if (val > -450 && val < -300) return 'very-low'
-          else if (val < -450) return 'very-very-low'
-          
-          
+          if (val > 0 && val < 200) return 'active'
+          else if (val > 200 && val < 400) return 'medium'
+          else if (val > 400 && val < 600) return 'high'
+          else if (val > 600) return 'very-high'
+          else if (val > -200 && val < 0) return 'low'
+          else if (val > -400 && val < -200) return 'medium-low'
+          else if (val > -600 && val < -400) return 'very-low'
+          else if (val < -600) return 'very-very-low'
+
+
           else return '';
         }
         // Function to create pagination links
@@ -211,7 +222,8 @@
             link.classList.add('page-item');
             link.innerHTML = `<a class="page-link" href="#">${i}</a>`;
             link.addEventListener('click', (event) => {
-              event.preventDefault(); // Prevent the default behavior of the click event
+              // Prevent the default behavior of the click event
+              event.preventDefault();
               displayPage(i);
             });
             pagination.appendChild(link);
