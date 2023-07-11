@@ -2,28 +2,6 @@ const { app, BrowserWindow, Menu, shell, ipcMain } = require("electron");
 const mysql = require("mysql2/promise");
 const path = require("path");
 
-const menuItems = [
-  {
-    label: "Window",
-    submenu: [
-      {
-        role: "minimize",
-      },
-      {
-        role: "close",
-      },
-    ],
-  },
-  {
-    label: "About",
-    click: async () => {
-      await shell.openExternal("https://gsolanki.vercel.app/");
-    },
-  },
-];
-
-const menu = Menu.buildFromTemplate(menuItems);
-Menu.setApplicationMenu(menu);
 async function createWindow() {
   const connection = await mysql.createConnection({
     host: "localhost",
@@ -55,6 +33,11 @@ async function createWindow() {
   ipcMain.on("reload-app", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
     win.reload();
+    if (newWindow) {
+      setTimeout(() => {
+        newWindow.close();
+      }, 1000);
+    }
   });
 
   win.webContents.on("did-finish-load", async () => {
@@ -254,6 +237,45 @@ async function createWindow() {
     });
   `);
   });
+
+  let newWindow;
+  const menuItems = [
+    {
+      label: "Window",
+      submenu: [
+        {
+          role: "minimize",
+        },
+        {
+          role: "close",
+        },
+      ],
+    },
+    {
+      label: "Add investment",
+      click: async () => {
+        newWindow = new BrowserWindow({
+          width: 600,
+          height: 400,
+          webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            preload: path.join(__dirname + "/preload.js"),
+          },
+        });
+        newWindow.loadFile("add.html");
+      },
+    },
+    {
+      label: "About",
+      click: async () => {
+        await shell.openExternal("https://gsolanki.vercel.app/");
+      },
+    },
+  ];
+
+  const menu = Menu.buildFromTemplate(menuItems);
+  Menu.setApplicationMenu(menu);
 }
 
 app.whenReady().then(() => {
