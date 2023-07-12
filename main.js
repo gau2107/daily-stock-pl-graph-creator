@@ -262,8 +262,13 @@ async function createWindow() {
             contextIsolation: false,
             preload: path.join(__dirname + "/preload.js"),
           },
+          transparent: true,
+          parent: win,
+          modal: true,
+          menu: null,
         });
         newWindow.loadFile("add.html");
+        newWindow.setMenu(null);
       },
     },
     {
