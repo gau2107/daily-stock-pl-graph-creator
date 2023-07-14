@@ -147,7 +147,7 @@ async function createWindow() {
 
     // compare last week to this week
     const lastValue = rows[rows.length - 1].current_value;
-    const lastWeekPl = rows[rows.length - 7].current_value;
+    const lastWeekPl = rows[rows.length - 5].current_value;
     const plDifference = lastValue - lastWeekPl;
 
     win.webContents
@@ -158,7 +158,7 @@ async function createWindow() {
 
     // compare last month to this month
     const lastMonthPl =
-      rows[rows.length - 30]?.current_value || rows[0].current_value;
+      rows[rows.length - 20]?.current_value || rows[0].current_value;
     const monthPlDifference = lastValue - lastMonthPl;
     const lastMonthPlPercent = (
       (monthPlDifference * 100) /
