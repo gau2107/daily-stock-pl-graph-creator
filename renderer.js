@@ -33,3 +33,24 @@ form.addEventListener("submit", (event) => {
   // Reset form
   document.getElementById("form").reset();
 });
+
+const weeklyBtnEvent = document.getElementById("weekly");
+weeklyBtnEvent.addEventListener("click", (event) => {
+  Chart.helpers.each(Chart.instances, (chart) => {
+    chart.destroy();
+  });
+  ipcRenderer.send("weekly-data");
+});
+
+const monthlyBtnEvent = document.getElementById("monthly");
+monthlyBtnEvent.addEventListener("click", (event) => {
+  Chart.helpers.each(Chart.instances, (chart) => {
+    chart.destroy();
+  });
+  ipcRenderer.send("monthly-data");
+});
+
+const allBtnEvent = document.getElementById("all");
+allBtnEvent.addEventListener("click", () => {
+  ipcRenderer.send("reload-app");
+});

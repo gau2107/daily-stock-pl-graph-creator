@@ -43,6 +43,19 @@ async function createWindow() {
   win.webContents.on("did-finish-load", async () => {
     let [rows] = await connection.query("SELECT * FROM daily_pl");
 
+    const chartDataCurrentValue = {
+      labels: rows.map((row) => new Date(row.date).toDateString()),
+      datasets: [
+        {
+          label: "Current Value",
+          data: rows.map((row) => row.current_value),
+          borderColor: "rgba(100, 150, 200, 1)",
+          backgroundColor: "rgba(100, 150, 200, 0.2)",
+          borderWidth: 1,
+        },
+      ],
+    };
+
     const chartDataDailyPl = {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
@@ -56,14 +69,28 @@ async function createWindow() {
       ],
     };
 
-    const chartDataCurrentValue = {
+    const niftyData = {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
-          label: "Current Value",
-          data: rows.map((row) => row.current_value),
-          borderColor: "rgba(100, 150, 200, 1)",
-          backgroundColor: "rgba(100, 150, 200, 0.2)",
+          label: "Nifty",
+          data: rows.map(
+            (row) =>
+              ((row.nifty_50 - rows[0].nifty_50) * 100) / rows[0].nifty_50
+          ),
+          borderColor: "rgba(50, 99, 132, 1)",
+          backgroundColor: "rgba(50, 99, 132, 0.2)",
+          borderWidth: 1,
+        },
+        {
+          label: "Total P/L",
+          data: rows.map(
+            (row) =>
+              ((row.current_value - rows[0].current_value) * 100) /
+              rows[0].current_value
+          ),
+          borderColor: "rgba(100, 99, 132, 1)",
+          backgroundColor: "rgba(100, 99, 132, 0.2)",
           borderWidth: 1,
         },
       ],
@@ -186,6 +213,72 @@ async function createWindow() {
       lastYearReturns.style.color = "${yearPlDifference > 0 ? "green" : "red"}";
       `);
 
+    win.webContents.executeJavaScript(`
+       let ctx = document.getElementById('current-chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: ${JSON.stringify(chartDataCurrentValue)}
+      });
+    `);
+
+    win.webContents.executeJavaScript(`
+      let ctx2 = document.getElementById('daily-chart').getContext('2d');
+      new Chart(ctx2, {
+        type: 'bar',
+        data: ${JSON.stringify(chartDataDailyPl)}
+      });
+    `);
+
+    win.webContents.executeJavaScript(`
+     let ctx3 = document.getElementById('nifty-chart').getContext('2d');
+    new Chart(ctx3, {
+      type: 'line',
+      data: ${JSON.stringify(niftyData)},
+    });
+  `);
+  });
+
+  ipcMain.on("weekly-data", async () => {
+    [rows] = await connection.query("SELECT * FROM daily_pl");
+    rows = rows.slice(-5);
+
+    populateCharts(rows);
+  });
+
+  ipcMain.on("monthly-data", async () => {
+    [rows] = await connection.query("SELECT * FROM daily_pl");
+    rows = rows.slice(-22);
+
+    populateCharts(rows);
+  });
+
+  function populateCharts(rows) {
+    const chartDataCurrentValue = {
+      labels: rows.map((row) => new Date(row.date).toDateString()),
+      datasets: [
+        {
+          label: "Current Value",
+          data: rows.map((row) => row.current_value),
+          borderColor: "rgba(100, 150, 200, 1)",
+          backgroundColor: "rgba(100, 150, 200, 0.2)",
+          borderWidth: 1,
+        },
+      ],
+    };
+
+    const chartDataDailyPl = {
+      labels: rows.map((row) => new Date(row.date).toDateString()),
+      datasets: [
+        {
+          label: "Daily PL",
+          data: rows.map((row) => row.daily_pl),
+          borderColor: "rgba(255, 110, 100, 1)",
+          backgroundColor: "rgba(255, 110, 100, 0.2)",
+          borderWidth: 1,
+        },
+      ],
+    };
+
     const niftyData = {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
@@ -214,29 +307,28 @@ async function createWindow() {
     };
 
     win.webContents.executeJavaScript(`
-      const ctx = document.getElementById('daily-chart').getContext('2d');
-      new Chart(ctx, {
+    ctx = document.getElementById('current-chart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: ${JSON.stringify(chartDataCurrentValue)}
+    });
+  `);
+    win.webContents.executeJavaScript(`
+      ctx2 = document.getElementById('daily-chart').getContext('2d');
+      new Chart(ctx2, {
         type: 'bar',
         data: ${JSON.stringify(chartDataDailyPl)}
       });
     `);
 
     win.webContents.executeJavaScript(`
-      const ctx2 = document.getElementById('current-chart').getContext('2d');
-      new Chart(ctx2, {
-        type: 'line',
-        data: ${JSON.stringify(chartDataCurrentValue)}
-      });
-    `);
-
-    win.webContents.executeJavaScript(`
-    const ctx3 = document.getElementById('nifty-chart').getContext('2d');
+    ctx3 = document.getElementById('nifty-chart').getContext('2d');
     new Chart(ctx3, {
       type: 'line',
       data: ${JSON.stringify(niftyData)},
     });
-  `);
-  });
+    `);
+  }
 
   let newWindow;
   const menuItems = [
