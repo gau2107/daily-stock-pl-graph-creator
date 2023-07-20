@@ -1,3 +1,4 @@
+const dayjs = require("dayjs");
 const { app, BrowserWindow, Menu, shell, ipcMain } = require("electron");
 const mysql = require("mysql2/promise");
 const path = require("path");
@@ -249,6 +250,19 @@ async function createWindow() {
     [rows] = await connection.query("SELECT * FROM daily_pl");
     rows = rows.slice(-22);
 
+    populateCharts(rows);
+  });
+
+  ipcMain.on("filterData", async (event, data) => {
+    console.log(dayjs(data.startDate), dayjs(data.endDate));
+    [rows] = await connection.query("SELECT * FROM daily_pl");
+    rows = rows.filter((temp) => {
+      return (
+        dayjs(temp.date).isAfter(dayjs(data.startDate).subtract(1, 'day')) &&
+        dayjs(temp.date).isBefore(dayjs(data.endDate).add(1, 'day'))
+      );
+    });
+    console.log(rows);
     populateCharts(rows);
   });
 
