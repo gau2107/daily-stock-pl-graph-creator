@@ -29,7 +29,7 @@ async function createWindow() {
   });
 
   win.loadFile("index.html");
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
 
   ipcMain.on("reload-app", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
@@ -57,14 +57,16 @@ async function createWindow() {
       ],
     };
 
+    const dailyChartData = rows.map((row) => row.daily_pl);
+    const colors = rows.map((row) => (row.daily_pl < 0 ? "rgba(255, 110, 100, .5)" : "rgba(0, 125, 10, .5)"));
     const chartDataDailyPl = {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
           label: "Daily PL",
-          data: rows.map((row) => row.daily_pl),
-          borderColor: "rgba(255, 110, 100, 1)",
-          backgroundColor: "rgba(255, 110, 100, 0.2)",
+          data: dailyChartData,
+          borderColor: rows.map((row) => (row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(0, 125, 10, 1)")),
+          backgroundColor: colors,
           borderWidth: 1,
         },
       ],
@@ -254,15 +256,13 @@ async function createWindow() {
   });
 
   ipcMain.on("filterData", async (event, data) => {
-    console.log(dayjs(data.startDate), dayjs(data.endDate));
     [rows] = await connection.query("SELECT * FROM daily_pl");
     rows = rows.filter((temp) => {
       return (
-        dayjs(temp.date).isAfter(dayjs(data.startDate).subtract(1, 'day')) &&
-        dayjs(temp.date).isBefore(dayjs(data.endDate).add(1, 'day'))
+        dayjs(temp.date).isAfter(dayjs(data.startDate).subtract(1, "day")) &&
+        dayjs(temp.date).isBefore(dayjs(data.endDate).add(1, "day"))
       );
     });
-    console.log(rows);
     populateCharts(rows);
   });
 
