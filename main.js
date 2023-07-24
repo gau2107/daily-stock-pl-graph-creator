@@ -29,7 +29,7 @@ async function createWindow() {
   });
 
   win.loadFile("index.html");
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 
   ipcMain.on("reload-app", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
@@ -41,10 +41,8 @@ async function createWindow() {
     }
   });
 
-  win.webContents.on("did-finish-load", async () => {
-    let [rows] = await connection.query("SELECT * FROM daily_pl");
-
-    const chartDataCurrentValue = {
+  function getCurrentDataForChart(rows) {
+    return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
@@ -56,23 +54,31 @@ async function createWindow() {
         },
       ],
     };
+  }
 
+  function getDailyPlDataForChart(rows) {
     const dailyChartData = rows.map((row) => row.daily_pl);
-    const colors = rows.map((row) => (row.daily_pl < 0 ? "rgba(255, 110, 100, .5)" : "rgba(0, 125, 10, .5)"));
-    const chartDataDailyPl = {
+    const colors = rows.map((row) =>
+      row.daily_pl < 0 ? "rgba(255, 110, 100, .5)" : "rgba(0, 125, 10, .5)"
+    );
+    return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
           label: "Daily PL",
           data: dailyChartData,
-          borderColor: rows.map((row) => (row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(0, 125, 10, 1)")),
+          borderColor: rows.map((row) =>
+            row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(0, 125, 10, 1)"
+          ),
           backgroundColor: colors,
           borderWidth: 1,
         },
       ],
     };
+  }
 
-    const niftyData = {
+  function getNiftyDataForChart(rows) {
+    return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
@@ -98,6 +104,10 @@ async function createWindow() {
         },
       ],
     };
+  }
+
+  win.webContents.on("did-finish-load", async () => {
+    let [rows] = await connection.query("SELECT * FROM daily_pl");
 
     // display history data
     const tableData = [...rows].reverse();
@@ -220,7 +230,7 @@ async function createWindow() {
        let ctx = document.getElementById('current-chart').getContext('2d');
       new Chart(ctx, {
         type: 'line',
-        data: ${JSON.stringify(chartDataCurrentValue)}
+        data: ${JSON.stringify(getCurrentDataForChart(rows))}
       });
     `);
 
@@ -228,7 +238,7 @@ async function createWindow() {
       let ctx2 = document.getElementById('daily-chart').getContext('2d');
       new Chart(ctx2, {
         type: 'bar',
-        data: ${JSON.stringify(chartDataDailyPl)}
+        data: ${JSON.stringify(getDailyPlDataForChart(rows))}
       });
     `);
 
@@ -236,7 +246,7 @@ async function createWindow() {
      let ctx3 = document.getElementById('nifty-chart').getContext('2d');
     new Chart(ctx3, {
       type: 'line',
-      data: ${JSON.stringify(niftyData)},
+      data: ${JSON.stringify(getNiftyDataForChart(rows))},
     });
   `);
   });
@@ -267,71 +277,18 @@ async function createWindow() {
   });
 
   function populateCharts(rows) {
-    const chartDataCurrentValue = {
-      labels: rows.map((row) => new Date(row.date).toDateString()),
-      datasets: [
-        {
-          label: "Current Value",
-          data: rows.map((row) => row.current_value),
-          borderColor: "rgba(100, 150, 200, 1)",
-          backgroundColor: "rgba(100, 150, 200, 0.2)",
-          borderWidth: 1,
-        },
-      ],
-    };
-
-    const chartDataDailyPl = {
-      labels: rows.map((row) => new Date(row.date).toDateString()),
-      datasets: [
-        {
-          label: "Daily PL",
-          data: rows.map((row) => row.daily_pl),
-          borderColor: "rgba(255, 110, 100, 1)",
-          backgroundColor: "rgba(255, 110, 100, 0.2)",
-          borderWidth: 1,
-        },
-      ],
-    };
-
-    const niftyData = {
-      labels: rows.map((row) => new Date(row.date).toDateString()),
-      datasets: [
-        {
-          label: "Nifty",
-          data: rows.map(
-            (row) =>
-              ((row.nifty_50 - rows[0].nifty_50) * 100) / rows[0].nifty_50
-          ),
-          borderColor: "rgba(50, 99, 132, 1)",
-          backgroundColor: "rgba(50, 99, 132, 0.2)",
-          borderWidth: 1,
-        },
-        {
-          label: "Total P/L",
-          data: rows.map(
-            (row) =>
-              ((row.current_value - rows[0].current_value) * 100) /
-              rows[0].current_value
-          ),
-          borderColor: "rgba(100, 99, 132, 1)",
-          backgroundColor: "rgba(100, 99, 132, 0.2)",
-          borderWidth: 1,
-        },
-      ],
-    };
-
     win.webContents.executeJavaScript(`
     ctx = document.getElementById('current-chart').getContext('2d');
     new Chart(ctx, {
       type: 'line',
-      data: ${JSON.stringify(chartDataCurrentValue)}
+      data: ${JSON.stringify(getCurrentDataForChart(rows))}
     });
   `);
     win.webContents.executeJavaScript(`
       ctx2 = document.getElementById('daily-chart').getContext('2d');
       new Chart(ctx2, {
         type: 'bar',
-        data: ${JSON.stringify(chartDataDailyPl)}
+        data: ${JSON.stringify(getDailyPlDataForChart(rows))}
       });
     `);
 
@@ -339,7 +296,7 @@ async function createWindow() {
     ctx3 = document.getElementById('nifty-chart').getContext('2d');
     new Chart(ctx3, {
       type: 'line',
-      data: ${JSON.stringify(niftyData)},
+      data: ${JSON.stringify(getNiftyDataForChart(rows))},
     });
     `);
   }
