@@ -87,8 +87,8 @@ async function createWindow() {
             (row) =>
               ((row.nifty_50 - rows[0].nifty_50) * 100) / rows[0].nifty_50
           ),
-          borderColor: "rgba(50, 99, 132, 1)",
-          backgroundColor: "rgba(50, 99, 132, 0.2)",
+          borderColor: "rgba(255, 110, 100, 1)",
+          backgroundColor: "rgba(255, 110, 100, .5)",
           borderWidth: 1,
         },
         {
@@ -98,8 +98,8 @@ async function createWindow() {
               ((row.current_value - rows[0].current_value) * 100) /
               rows[0].current_value
           ),
-          borderColor: "rgba(100, 99, 132, 1)",
-          backgroundColor: "rgba(100, 99, 132, 0.2)",
+          borderColor: "rgba(0, 125, 10, 1)",
+          backgroundColor: "rgba(0, 125, 10, .5)",
           borderWidth: 1,
         },
       ],
