@@ -187,7 +187,7 @@ async function createWindow() {
 
     // compare last week to this week
     const lastValue = rows[rows.length - 1].current_value;
-    const lastWeekPl = rows[rows.length - 5].current_value;
+    const lastWeekPl = rows[rows.length - 6].current_value;
     const plDifference = lastValue - lastWeekPl;
 
     win.webContents
@@ -198,7 +198,7 @@ async function createWindow() {
 
     // compare last month to this month
     const lastMonthPl =
-      rows[rows.length - 20]?.current_value || rows[0].current_value;
+      rows[rows.length - 21]?.current_value || rows[0].current_value;
     const monthPlDifference = lastValue - lastMonthPl;
     const lastMonthPlPercent = (
       (monthPlDifference * 100) /
@@ -213,7 +213,7 @@ async function createWindow() {
      `);
 
     const lastYearCurrentValue =
-      rows[rows.length - 260]?.current_value || rows[0].current_value;
+      rows[rows.length - 261]?.current_value || rows[0].current_value;
     const yearPlDifference = (lastValue - lastYearCurrentValue).toFixed(2);
     const yearPercent = (
       (yearPlDifference * 100) /
