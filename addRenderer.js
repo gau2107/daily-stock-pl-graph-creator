@@ -6,7 +6,7 @@ const connection = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "stock_portfolio",
+  database: "test",
 });
 
 const baseForm = document.getElementById("base-form");

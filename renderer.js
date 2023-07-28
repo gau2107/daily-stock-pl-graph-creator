@@ -7,7 +7,7 @@ const connection = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "stock_portfolio",
+  database: "test",
 });
 
 const form = document.getElementById("form");
@@ -74,7 +74,30 @@ fileUploadInput.addEventListener("change", (event) => {
   Papa.parse(file, {
     download: true,
     complete: function (results) {
-      console.log("Finished:", results.data);
+      results.data.shift();
+      let data = results.data.filter((arr) => arr.length === 8);
+
+      const tableName = "holdings";
+
+      const columns = [
+        "instrument",
+        "qty",
+        "avg_cost",
+        "ltp",
+        "cur_val",
+        "p_l",
+        "net_chg",
+        "day_chg",
+      ];
+
+      // Build the query for bulk insert
+      const insertQuery = `INSERT INTO ${tableName} (${columns.join(
+        ", "
+      )}) VALUES ?`;
+
+      connection.query(insertQuery, [data], (err, results) => {
+        if (err) throw err;
+      });
     },
   });
 });
