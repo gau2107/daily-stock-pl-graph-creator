@@ -1,5 +1,6 @@
 const mysql = require("mysql");
 const { ipcRenderer } = require("electron");
+const Papa = require("papaparse");
 
 // Replace the connection details with your own
 const connection = mysql.createConnection({
@@ -62,5 +63,18 @@ filterBtn.addEventListener("click", () => {
   });
   const startDate = document.getElementById("start-date").value;
   const endDate = document.getElementById("end-date").value;
-  ipcRenderer.send("filterData",  {startDate, endDate});
+  ipcRenderer.send("filterData", { startDate, endDate });
+});
+
+const fileUploadInput = document.getElementById("holdings");
+fileUploadInput.addEventListener("change", (event) => {
+  let file = event.target.files[0];
+
+  // Parse local CSV file
+  Papa.parse(file, {
+    download: true,
+    complete: function (results) {
+      console.log("Finished:", results.data);
+    },
+  });
 });
