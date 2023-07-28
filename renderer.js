@@ -62,6 +62,5 @@ filterBtn.addEventListener("click", () => {
   });
   const startDate = document.getElementById("start-date").value;
   const endDate = document.getElementById("end-date").value;
-  console.log(startDate, endDate);
   ipcRenderer.send("filterData",  {startDate, endDate});
 });
