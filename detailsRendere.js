@@ -1,5 +1,7 @@
 const mysql = require("mysql2/promise");
-const backgroundColors = ([0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]).map(() => getRandomColor());
+const backgroundColors = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0].map(() =>
+  getRandomColor()
+);
 function getRandomColor() {
   const letters = "0123456789ABCDEF";
   let color = "#";
@@ -17,8 +19,6 @@ async function getData() {
   });
 
   [rows] = await connection.query("SELECT * FROM holdings");
-
-  console.log(rows);
 
   const labels = rows.map((item) => item.instrument);
   const values = rows.map((item) => item.cur_val);
@@ -52,7 +52,51 @@ async function getData() {
 
   const chartCanvas = document.getElementById("doughnut-chart");
   new Chart(chartCanvas, config);
+
+  compareChart(rows);
+}
+
+function compareChart(rows) {
+  const labels = rows.map((item) => item.instrument);
+  const values = rows.map((item) => item.cur_val);
+  const values1 = rows.map((item) => item.avg_cost * item.qty);
+  console.log(values1);
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        label: "ASdasd",
+        data: values1,
+        backgroundColor: "red",
+        borderColor: "red",
+        borderWidth: 1,
+      },
+      {
+        label: "ASdasda",
+        data: values,
+        backgroundColor: "green",
+        borderColor: "green",
+        borderWidth: 1,
+      },
+    ],
+  };
+  const config = {
+    type: "bar",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+        title: {
+          display: true,
+          text: "Holdings",
+        },
+      },
+    },
+  };
+  const chartCanvas = document.getElementById("compare-chart");
+  new Chart(chartCanvas, config);
 }
 getData();
-
-
