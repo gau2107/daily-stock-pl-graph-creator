@@ -54,28 +54,28 @@ async function getData() {
   new Chart(chartCanvas, config);
 
   compareChart(rows);
+  plChart(rows);
 }
 
 function compareChart(rows) {
   const labels = rows.map((item) => item.instrument);
   const values = rows.map((item) => item.cur_val);
   const values1 = rows.map((item) => item.avg_cost * item.qty);
-  console.log(values1);
   const data = {
     labels: labels,
     datasets: [
       {
-        label: "ASdasd",
+        label: "Invested value",
         data: values1,
-        backgroundColor: "red",
-        borderColor: "red",
+        backgroundColor: "rgba(41, 128, 185, .5)",
+        borderColor: "rgba(41, 128, 185, 1)",
         borderWidth: 1,
       },
       {
-        label: "ASdasda",
+        label: "Current value",
         data: values,
-        backgroundColor: "green",
-        borderColor: "green",
+        backgroundColor: "rgba(39, 174, 96, .5)",
+        borderColor: "rgba(39, 174, 96, 1)",
         borderWidth: 1,
       },
     ],
@@ -97,6 +97,46 @@ function compareChart(rows) {
     },
   };
   const chartCanvas = document.getElementById("compare-chart");
+  new Chart(chartCanvas, config);
+}
+
+function plChart(rows) {
+  const labels = rows.map((item) => item.instrument);
+  const values = rows.map(
+    (item) => (100 * item.p_l) / (item.avg_cost * item.qty)
+  );
+  const colors = values.map((row) =>
+    row < 0 ? "rgba(255, 110, 100, .5)" : "rgba(0, 125, 10, .5)"
+  );
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Current value",
+        data: values,
+        backgroundColor: colors,
+        borderColor: colors,
+        borderWidth: 1,
+      },
+    ],
+  };
+  const config = {
+    type: "bar",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+        title: {
+          display: true,
+          text: "Holdings",
+        },
+      },
+    },
+  };
+  const chartCanvas = document.getElementById("pl-chart");
   new Chart(chartCanvas, config);
 }
 getData();

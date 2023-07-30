@@ -347,7 +347,7 @@ async function createWindow() {
         newWindow.loadFile("details.html");
         newWindow.setMenu(null);
 
-        newWindow.webContents.openDevTools();
+        // newWindow.webContents.openDevTools();
       },
     },
     {
