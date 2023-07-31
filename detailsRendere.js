@@ -44,7 +44,7 @@ async function getData() {
         },
         title: {
           display: true,
-          text: "Holdings",
+          text: "Holdings doughnut",
         },
       },
     },
@@ -55,6 +55,7 @@ async function getData() {
 
   compareChart(rows);
   plChart(rows);
+  plValueChart(rows);
 }
 
 function compareChart(rows) {
@@ -89,10 +90,6 @@ function compareChart(rows) {
         legend: {
           position: "top",
         },
-        title: {
-          display: true,
-          text: "Holdings",
-        },
       },
     },
   };
@@ -112,7 +109,7 @@ function plChart(rows) {
     labels: labels,
     datasets: [
       {
-        label: "Current value",
+        label: "Current profit / loss %",
         data: values,
         backgroundColor: colors,
         borderColor: colors,
@@ -129,14 +126,44 @@ function plChart(rows) {
         legend: {
           position: "top",
         },
-        title: {
-          display: true,
-          text: "Holdings",
-        },
       },
     },
   };
   const chartCanvas = document.getElementById("pl-chart");
+  new Chart(chartCanvas, config);
+}
+
+function plValueChart(rows) {
+  const labels = rows.map((item) => item.instrument);
+  const values = rows.map((item) => item.cur_val - item.avg_cost * item.qty);
+  const colors = values.map((row) =>
+    row < 0 ? "rgba(255, 110, 100, .5)" : "rgba(0, 125, 10, .5)"
+  );
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Current profit / loss",
+        data: values,
+        backgroundColor: colors,
+        borderColor: colors,
+        borderWidth: 1,
+      },
+    ],
+  };
+  const config = {
+    type: "bar",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+      },
+    },
+  };
+  const chartCanvas = document.getElementById("pl-value-chart");
   new Chart(chartCanvas, config);
 }
 getData();
