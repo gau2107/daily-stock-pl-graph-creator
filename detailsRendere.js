@@ -18,7 +18,9 @@ async function getData() {
     database: "test",
   });
 
-  [rows] = await connection.query("SELECT * FROM holdings");
+  [rows] = await connection.query(
+    "SELECT * FROM holdings ORDER BY id DESC LIMIT 15;"
+  );
 
   const labels = rows.map((item) => item.instrument);
   const values = rows.map((item) => item.cur_val);
