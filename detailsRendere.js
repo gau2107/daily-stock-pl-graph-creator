@@ -192,7 +192,8 @@ function allHoldingsChart(rows) {
   const labels = groupedData.map((data) => new Date(data.date).toDateString());
 
   function getPercent(found) {
-    return (100 * found.p_l) / (found.avg_cost * found.qty);
+    if (found) return (100 * found.p_l) / (found.avg_cost * found.qty);
+    else return 0;
   }
   function generateDataSets(type, label) {
     let arr = [];
