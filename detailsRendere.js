@@ -191,11 +191,14 @@ function allHoldingsChart(rows) {
 
   const labels = groupedData.map((data) => new Date(data.date).toDateString());
 
-  function generateDataSets(i, label) {
+  function getPercent(found) {
+    return (100 * found.p_l) / (found.avg_cost * found.qty);
+  }
+  function generateDataSets(type, label) {
     let arr = [];
     for (let i = 0; i < groupedData.length; i++) {
       let found = groupedData[i].data.find((x) => x.instrument === label);
-      let cal = found?.day_chg;
+      let cal = type === "daily" ? found?.day_chg : getPercent(found);
       arr.push(cal);
     }
 
@@ -208,29 +211,33 @@ function allHoldingsChart(rows) {
     };
   }
 
-  let dd = [];
-  for (let i = 0; i < 15; i++) {
-    let label = groupedData[0].data[i].instrument;
-    dd.push(generateDataSets(i, label));
-  }
+  const chartCanvas = document.getElementById("daily-chart");
+  new Chart(chartCanvas, getConfig("daily"));
+  const chartCanvas1 = document.getElementById("total-chart");
+  new Chart(chartCanvas1, getConfig("total"));
 
-  const data = {
-    labels: labels,
-    datasets: dd,
-  };
-  const config = {
-    type: "line",
-    data: data,
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "top",
+  function getConfig(type) {
+    let dataset = [];
+    for (let i = 0; i < 15; i++) {
+      let label = groupedData[0].data[i].instrument;
+      dataset.push(generateDataSets(type, label));
+    }
+    const data = {
+      labels: labels,
+      datasets: dataset,
+    };
+    return {
+      type: "line",
+      data: data,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "top",
+          },
         },
       },
-    },
-  };
-  const chartCanvas = document.getElementById("daily-chart");
-  new Chart(chartCanvas, config);
+    };
+  }
 }
 getData();
