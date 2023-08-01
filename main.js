@@ -8,7 +8,7 @@ async function createWindow() {
     host: "localhost",
     user: "root",
     password: "",
-    database: "test",
+    database: "stock_portfolio",
   });
 
   const win = new BrowserWindow({

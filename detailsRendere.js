@@ -17,7 +17,7 @@ async function getData() {
     host: "localhost",
     user: "root",
     password: "",
-    database: "test",
+    database: "stock_portfolio",
   });
 
   [rows] = await connection.query(
