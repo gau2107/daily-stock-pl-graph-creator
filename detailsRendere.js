@@ -2,6 +2,7 @@ const mysql = require("mysql2/promise");
 const backgroundColors = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0].map(() =>
   getRandomColor()
 );
+
 function getRandomColor() {
   const letters = "0123456789ABCDEF";
   let color = "#";
@@ -10,6 +11,7 @@ function getRandomColor() {
   }
   return color;
 }
+
 async function getData() {
   const connection = await mysql.createConnection({
     host: "localhost",
@@ -21,7 +23,16 @@ async function getData() {
   [rows] = await connection.query(
     "SELECT * FROM holdings ORDER BY id DESC LIMIT 15;"
   );
+  doughnutChart(rows);
+  compareChart(rows);
+  plChart(rows);
+  plValueChart(rows);
 
+  [allRows] = await connection.query("SELECT * FROM holdings;");
+  allHoldingsChart(allRows);
+}
+
+function doughnutChart() {
   const labels = rows.map((item) => item.instrument);
   const values = rows.map((item) => item.cur_val);
   const data = {
@@ -54,12 +65,7 @@ async function getData() {
 
   const chartCanvas = document.getElementById("doughnut-chart");
   new Chart(chartCanvas, config);
-
-  compareChart(rows);
-  plChart(rows);
-  plValueChart(rows);
 }
-
 function compareChart(rows) {
   const labels = rows.map((item) => item.instrument);
   const values = rows.map((item) => item.cur_val);
@@ -166,6 +172,65 @@ function plValueChart(rows) {
     },
   };
   const chartCanvas = document.getElementById("pl-value-chart");
+  new Chart(chartCanvas, config);
+}
+
+function allHoldingsChart(rows) {
+  const groupedData = rows.reduce((acc, obj) => {
+    const date = new Date(obj.date).getTime();
+    const existingGroup = acc.find(
+      (group) => new Date(group.date).getTime() === date
+    );
+    if (existingGroup) {
+      existingGroup.data.push(obj);
+    } else {
+      acc.push({ date: date, data: [obj] });
+    }
+    return acc;
+  }, []);
+
+  const labels = groupedData.map((data) => new Date(data.date).toDateString());
+
+  function generateDataSets(i, label) {
+    let arr = [];
+    for (let i = 0; i < groupedData.length; i++) {
+      let found = groupedData[i].data.find((x) => x.instrument === label);
+      let cal = found?.day_chg;
+      arr.push(cal);
+    }
+
+    return {
+      label: label,
+      data: arr,
+      backgroundColor: getRandomColor(),
+      borderColor: getRandomColor(),
+      borderWidth: 1.5,
+    };
+  }
+
+  let dd = [];
+  for (let i = 0; i < 15; i++) {
+    let label = groupedData[0].data[i].instrument;
+    dd.push(generateDataSets(i, label));
+  }
+
+  const data = {
+    labels: labels,
+    datasets: dd,
+  };
+  const config = {
+    type: "line",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+      },
+    },
+  };
+  const chartCanvas = document.getElementById("daily-chart");
   new Chart(chartCanvas, config);
 }
 getData();
