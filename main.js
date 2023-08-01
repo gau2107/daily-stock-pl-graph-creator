@@ -346,6 +346,7 @@ async function createWindow() {
         });
         newWindow.loadFile("details.html");
         newWindow.setMenu(null);
+        newWindow.maximize();
 
         // newWindow.webContents.openDevTools();
       },
