@@ -1,4 +1,12 @@
 const mysql = require("mysql2/promise");
+const dotenv = require("dotenv");
+const path = require("path");
+
+const envFilePath =
+  process.env.NODE_ENV === "production" ? ".env.production" : ".env.local";
+dotenv.config({ path: path.resolve(__dirname, envFilePath) });
+const dbConnectionString = process.env.DB_CONNECTION_STRING;
+
 const backgroundColors = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0].map(() =>
   getRandomColor()
 );
@@ -17,7 +25,7 @@ async function getData() {
     host: "localhost",
     user: "root",
     password: "",
-    database: "stock_portfolio",
+    database: dbConnectionString,
   });
 
   [rows] = await connection.query(

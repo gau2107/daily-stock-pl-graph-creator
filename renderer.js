@@ -1,13 +1,19 @@
 const mysql = require("mysql");
 const { ipcRenderer } = require("electron");
 const Papa = require("papaparse");
+const dotenv = require("dotenv");
+const path = require("path");
 
+const envFilePath =
+  process.env.NODE_ENV === "production" ? ".env.production" : ".env.local";
+dotenv.config({ path: path.resolve(__dirname, envFilePath) });
+const dbConnectionString = process.env.DB_CONNECTION_STRING;
 // Replace the connection details with your own
 const connection = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "stock_portfolio",
+  database: dbConnectionString,
 });
 
 const form = document.getElementById("form");

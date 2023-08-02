@@ -2,13 +2,18 @@ const dayjs = require("dayjs");
 const { app, BrowserWindow, Menu, shell, ipcMain } = require("electron");
 const mysql = require("mysql2/promise");
 const path = require("path");
+const dotenv = require("dotenv");
+const envFilePath =
+  process.env.NODE_ENV === "production" ? ".env.production" : ".env.local";
+dotenv.config({ path: path.resolve(__dirname, envFilePath) });
+const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 async function createWindow() {
   const connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "",
-    database: "stock_portfolio",
+    database: dbConnectionString,
   });
 
   const win = new BrowserWindow({
@@ -343,12 +348,12 @@ async function createWindow() {
             contextIsolation: false,
             preload: path.join(__dirname + "/preload.js"),
           },
+          parent: win,
         });
         newWindow.loadFile("details.html");
         newWindow.setMenu(null);
         newWindow.maximize();
-
-        // newWindow.webContents.openDevTools();
+        if (process.env.DEBUG === "true") newWindow.webContents.openDevTools();
       },
     },
     {
