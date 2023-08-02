@@ -4,7 +4,7 @@ const mysql = require("mysql2/promise");
 const path = require("path");
 const dotenv = require("dotenv");
 const envFilePath =
-  process.env.NODE_ENV === "production" ? ".env.production" : ".env.local";
+  process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
