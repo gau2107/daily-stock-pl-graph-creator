@@ -307,6 +307,7 @@ async function createWindow() {
   }
 
   let newWindow;
+  let individualStockWindow;
   const menuItems = [
     {
       label: "Window",
@@ -350,10 +351,25 @@ async function createWindow() {
           },
           parent: win,
         });
-        newWindow.loadFile("details.html");
+        newWindow.loadFile("holdings.html");
         newWindow.setMenu(null);
         newWindow.maximize();
-        if (process.env.DEBUG === "true") newWindow.webContents.openDevTools();
+      },
+    },
+    {
+      label: "Individual Stock",
+      click: async () => {
+        individualStockWindow = new BrowserWindow({
+          webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            preload: path.join(__dirname + "/preload.js"),
+          },
+          parent: win,
+        });
+        individualStockWindow.loadFile("individualStock.html");
+        individualStockWindow.setMenu(null);
+        individualStockWindow.maximize();
       },
     },
     {
