@@ -47,6 +47,7 @@ function x(rows, stockRows) {
     }
     let find = values.findIndex((v) => v.instrument === rows[i].instrument);
     if (find >= 0) {
+      values[find].day_chg.push(parseFloat(rows[i].day_chg));
       values[find].data.push(
         parseFloat(values[find].data[values[find].data.length - 1]) +
           parseFloat(rows[i].day_chg)
@@ -55,6 +56,7 @@ function x(rows, stockRows) {
       values.push({
         instrument: rows[i].instrument,
         data: [parseFloat(rows[i].day_chg)],
+        day_chg: [parseFloat(rows[i].day_chg)],
         color: getRandomColor(),
       });
     }
@@ -73,6 +75,13 @@ function chart(dates, value, stockRows) {
         data: value.data,
         backgroundColor: value.color,
         borderColor: value.color,
+        borderWidth: 1,
+      },
+      {
+        type: 'bar',
+        data: value.day_chg,
+        backgroundColor: "rgba(200, 200, 255, .5)",
+        borderColor: "rgba(200, 200, 255, 1)",
         borderWidth: 1,
       },
       {

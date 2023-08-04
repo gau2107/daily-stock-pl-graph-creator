@@ -34,7 +34,7 @@ async function createWindow() {
   });
 
   win.loadFile("index.html");
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
 
   ipcMain.on("reload-app", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
@@ -158,9 +158,12 @@ async function createWindow() {
 
     // get the highest value, lowest value & streak
     const highestValue = Math.max(...rows.map((row) => row.current_value));
+    const percent =
+      (((highestValue - rows[0].current_value) * 100) / rows[0].current_value).toFixed(2);
     win.webContents
       .executeJavaScript(`const highestValueTag = document.getElementById("highest-value");
     highestValueTag.innerHTML = ${highestValue};
+    highestValueTag.innerHTML = highestValueTag.innerHTML + " "+"("+${percent}+"%)";        
     highestValueTag.style.color = 'green';
     `);
 
@@ -354,7 +357,6 @@ async function createWindow() {
         newWindow.loadFile("holdings.html");
         newWindow.setMenu(null);
         newWindow.maximize();
-
       },
     },
     {
@@ -372,7 +374,6 @@ async function createWindow() {
         individualStockWindow.setMenu(null);
         individualStockWindow.maximize();
         individualStockWindow.webContents.openDevTools();
-
       },
     },
     {
