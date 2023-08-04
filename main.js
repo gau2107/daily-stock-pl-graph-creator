@@ -34,7 +34,7 @@ async function createWindow() {
   });
 
   win.loadFile("index.html");
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 
   ipcMain.on("reload-app", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
@@ -373,7 +373,7 @@ async function createWindow() {
         individualStockWindow.loadFile("individualStock.html");
         individualStockWindow.setMenu(null);
         individualStockWindow.maximize();
-        individualStockWindow.webContents.openDevTools();
+        // individualStockWindow.webContents.openDevTools();
       },
     },
     {
