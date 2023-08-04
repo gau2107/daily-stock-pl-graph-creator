@@ -16,7 +16,14 @@ async function getData() {
   });
 
   [rows] = await connection.query("SELECT * FROM holdings;");
-  x(rows);
+  [stockRows] = await connection.query(
+    `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${rows.length / 15};`
+  );
+  let stockData = [...stockRows.reverse()];
+  let xx = stockData.map(
+    (s) => ((s.nifty_50 - stockData[0].nifty_50) * 100) / stockData[0].nifty_50
+  );
+  x(rows, xx);
 }
 function getRandomColor() {
   const letters = "0123456789ABCDEF";
@@ -26,7 +33,8 @@ function getRandomColor() {
   }
   return color;
 }
-function x(rows) {
+
+function x(rows, stockRows) {
   let dates = [];
   let values = [];
   for (let i = 0; i < rows.length; i++) {
@@ -53,10 +61,10 @@ function x(rows) {
   }
   dates = dates.map((data) => new Date(data).toDateString());
 
-  for (let i = 0; i < values.length; i++) chart(dates, values[i]);
+  for (let i = 0; i < values.length; i++) chart(dates, values[i], stockRows);
 }
 
-function chart(dates, value) {
+function chart(dates, value, stockRows) {
   const data = {
     labels: dates,
     datasets: [
@@ -65,6 +73,13 @@ function chart(dates, value) {
         data: value.data,
         backgroundColor: value.color,
         borderColor: value.color,
+        borderWidth: 1,
+      },
+      {
+        label: "Nifty 50",
+        data: stockRows,
+        backgroundColor: "rgba(200, 100, 100, .5)",
+        borderColor: "rgba(200, 100, 100, 1)",
         borderWidth: 1,
       },
     ],
@@ -84,6 +99,7 @@ function chart(dates, value) {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   new Chart(ctx, config);
-  document.body.appendChild(canvas);
+  const container = document.getElementById("container");
+  container.appendChild(canvas);
 }
 getData();

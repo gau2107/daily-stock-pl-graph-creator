@@ -354,6 +354,7 @@ async function createWindow() {
         newWindow.loadFile("holdings.html");
         newWindow.setMenu(null);
         newWindow.maximize();
+
       },
     },
     {
@@ -370,6 +371,8 @@ async function createWindow() {
         individualStockWindow.loadFile("individualStock.html");
         individualStockWindow.setMenu(null);
         individualStockWindow.maximize();
+        individualStockWindow.webContents.openDevTools();
+
       },
     },
     {
