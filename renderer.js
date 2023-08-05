@@ -80,8 +80,13 @@ fileUploadInput.addEventListener("change", (event) => {
   Papa.parse(file, {
     download: true,
     complete: function (results) {
-      results.data.shift();
-      let data = results.data.filter((arr) => arr.length === 8);
+      results.data.shift(); //remove first row as it contains labels
+      let data = results.data.filter((arr) => arr.length === 8); //so we can filter out blank array
+      // replace instrument name to store properly in database
+      for (let i = 0; i < data.length; i++) {
+        if (data[i][0].startsWith("MCDOW")) data[i][0] = "UNITDSPR";
+        if (data[i][0].startsWith("SGBJUN")) data[i][0] = "SGBJUNE31";
+      }
 
       const tableName = "holdings";
 

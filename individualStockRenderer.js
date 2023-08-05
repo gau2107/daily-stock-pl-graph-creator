@@ -79,6 +79,7 @@ function chart(dates, value, stockRows) {
       },
       {
         type: 'bar',
+        label: value.instrument + ' Day change',
         data: value.day_chg,
         backgroundColor: "rgba(200, 200, 255, .5)",
         borderColor: "rgba(200, 200, 255, 1)",
