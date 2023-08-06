@@ -328,7 +328,7 @@ async function createWindow() {
       click: async () => {
         newWindow = new BrowserWindow({
           width: 600,
-          height: 400,
+          height: 500,
           webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,

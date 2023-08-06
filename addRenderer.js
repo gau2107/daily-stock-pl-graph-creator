@@ -37,3 +37,38 @@ baseForm.addEventListener("submit", (event) => {
   // Reset form
   document.getElementById("base-form").reset();
 });
+
+const instrumentForm = document.getElementById("instrument-form");
+instrumentForm.addEventListener("submit", (event) => {
+  event.preventDefault(); // Prevent the default form submission behavior
+
+  // Get form data
+  const instrumentValue = document.getElementById("instrument-value").value;
+  const sectorValue = document.getElementById("sector-value").value;
+  // Save form data to MySQL database
+  const query = `INSERT INTO instrument (name, sector_id) VALUES ('${instrumentValue}', '${sectorValue}')`;
+  connection.query(query, (err, result) => {
+    if (err) {
+      console.log(err);
+      throw err;
+    }
+  });
+
+  // Reset form
+  document.getElementById("instrument-form").reset();
+});
+
+// load dropdown with sector values
+const selectBox = document.getElementById("sector-value");
+const query = "SELECT id, name FROM sector";
+connection.query(query, (err, rows) => {
+  if (err) throw err;
+
+  // Populate the select box options
+  rows.forEach((row) => {
+    const option = document.createElement("option");
+    option.value = row.id;
+    option.text = row.name;
+    selectBox.appendChild(option);
+  });
+});
