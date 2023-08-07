@@ -15,7 +15,9 @@ async function getData() {
     database: dbConnectionString,
   });
 
-  [rows] = await connection.query("SELECT * FROM holdings;");
+  [rows] =
+    await connection.query(`SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
+  FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id;`);
   [stockRows] = await connection.query(
     `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${rows.length / 15};`
   );
@@ -78,8 +80,8 @@ function chart(dates, value, stockRows) {
         borderWidth: 1,
       },
       {
-        type: 'bar',
-        label: value.instrument + ' Day change',
+        type: "bar",
+        label: value.instrument + " Day change",
         data: value.day_chg,
         backgroundColor: "rgba(200, 200, 255, .5)",
         borderColor: "rgba(200, 200, 255, 1)",
