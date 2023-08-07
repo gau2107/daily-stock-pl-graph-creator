@@ -1,4 +1,5 @@
-const mysql = require("mysql");
+const mysql = require("mysql2/promise");
+
 const { ipcRenderer } = require("electron");
 const Papa = require("papaparse");
 const dotenv = require("dotenv");
@@ -9,15 +10,9 @@ const envFilePath =
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 // Replace the connection details with your own
-const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: dbConnectionString,
-});
 
 const form = document.getElementById("form");
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault(); // Prevent the default form submission behavior
 
   // Get form data
@@ -26,16 +21,17 @@ form.addEventListener("submit", (event) => {
   const totalPL = document.getElementById("total-pl-input").value;
   const currentValue = document.getElementById("current-value").value;
   const nifty = document.getElementById("nifty-50").value;
+  const connection = await mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: dbConnectionString,
+  });
 
   // Save form data to MySQL database
   const query = `INSERT INTO daily_pl (date, daily_pl, total_pl, current_value, nifty_50) VALUES ('${date}', ${dailyPL}, ${totalPL}, ${currentValue}, ${nifty})`;
-  connection.query(query, (err, result) => {
-    if (err) {
-      console.log(err);
-      throw err;
-    }
-    ipcRenderer.send("reload-app");
-  });
+  await connection.query(query);
+  ipcRenderer.send("reload-app");
 
   // Reset form
   document.getElementById("form").reset();
@@ -73,9 +69,17 @@ filterBtn.addEventListener("click", () => {
 });
 
 const fileUploadInput = document.getElementById("holdings");
-fileUploadInput.addEventListener("change", (event) => {
+fileUploadInput.addEventListener("change", async (event) => {
+  const c = await mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: dbConnectionString,
+  });
+  let table;
+  const query = `SELECT * from instrument`;
+  [table] = await c.query(query);
   let file = event.target.files[0];
-
   // Parse local CSV file
   Papa.parse(file, {
     download: true,
@@ -86,12 +90,14 @@ fileUploadInput.addEventListener("change", (event) => {
       for (let i = 0; i < data.length; i++) {
         if (data[i][0].startsWith("MCDOW")) data[i][0] = "UNITDSPR";
         if (data[i][0].startsWith("SGBJUN")) data[i][0] = "SGBJUNE31";
+        let d = table.find((d) => d.name === data[i][0]);
+        data[i][0] = d.id;
       }
 
       const tableName = "holdings";
 
       const columns = [
-        "instrument",
+        "instrument_id",
         "qty",
         "avg_cost",
         "ltp",
@@ -106,7 +112,7 @@ fileUploadInput.addEventListener("change", (event) => {
         ", "
       )}) VALUES ?`;
 
-      connection.query(insertQuery, [data], (err, results) => {
+      c.query(insertQuery, [data], (err, results) => {
         if (err) throw err;
       });
     },
