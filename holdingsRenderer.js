@@ -29,14 +29,19 @@ async function getData() {
   });
 
   [rows] = await connection.query(
-    "SELECT * FROM holdings ORDER BY id DESC LIMIT 15;"
+    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
+      i.name AS instrument, i.sector_id FROM holdings AS h INNER JOIN instrument AS i ON
+      h.instrument_id = i.id ORDER BY id DESC LIMIT 15;`
   );
   doughnutChart(rows);
   compareChart(rows);
   plChart(rows);
   plValueChart(rows);
 
-  [allRows] = await connection.query("SELECT * FROM holdings;");
+  [allRows] = await connection.query(
+    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
+    FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id;`
+  );
   allHoldingsChart(allRows);
 }
 
