@@ -1,11 +1,19 @@
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const path = require("path");
+const { ipcRenderer } = require("electron");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
+
+let totalInstruments;
+ipcRenderer.send("get-total-instruments");
+
+ipcRenderer.on("total-instruments", (event, data) => {
+  totalInstruments = data;
+});
 
 async function getData() {
   const connection = await mysql.createConnection({
@@ -19,7 +27,9 @@ async function getData() {
     await connection.query(`SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
   FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id;`);
   [stockRows] = await connection.query(
-    `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${rows.length / 15};`
+    `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${
+      rows.length / totalInstruments
+    };`
   );
   let stockData = [...stockRows.reverse()];
   let xx = stockData.map(

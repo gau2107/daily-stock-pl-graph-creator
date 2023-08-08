@@ -15,6 +15,7 @@ async function createWindow() {
     password: "",
     database: dbConnectionString,
   });
+  [instruments] = await connection.query("SELECT * from instrument");
 
   const win = new BrowserWindow({
     width: 800,
@@ -34,7 +35,7 @@ async function createWindow() {
   });
 
   win.loadFile("index.html");
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
 
   ipcMain.on("reload-app", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
@@ -112,6 +113,8 @@ async function createWindow() {
   }
 
   win.webContents.on("did-finish-load", async () => {
+    win.totalInstruments = instruments.length;
+
     let [rows] = await connection.query("SELECT * FROM daily_pl");
 
     // display history data
@@ -273,6 +276,11 @@ async function createWindow() {
   `);
   });
 
+  ipcMain.on('get-total-instruments', (event) => {
+    const data = win.totalInstruments || null;
+    event.sender.send('total-instruments', data);
+  });
+
   ipcMain.on("weekly-data", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
     rows = rows.slice(-5);
@@ -371,6 +379,7 @@ async function createWindow() {
         newWindow.loadFile("holdings.html");
         newWindow.setMenu(null);
         newWindow.maximize();
+        newWindow.webContents.openDevTools();
       },
     },
     {

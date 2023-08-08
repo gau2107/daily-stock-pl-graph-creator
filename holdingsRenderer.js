@@ -1,16 +1,20 @@
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const path = require("path");
+const { ipcRenderer } = require("electron");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
-const backgroundColors = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0].map(() =>
-  getRandomColor()
-);
+let totalInstruments;
+ipcRenderer.send("get-total-instruments");
 
+ipcRenderer.on("total-instruments", (event, data) => {
+  totalInstruments = data;
+});
+let backgroundColors;
 function getRandomColor() {
   const letters = "0123456789ABCDEF";
   let color = "#";
@@ -19,7 +23,6 @@ function getRandomColor() {
   }
   return color;
 }
-
 async function getData() {
   const connection = await mysql.createConnection({
     host: "localhost",
@@ -31,8 +34,11 @@ async function getData() {
   [rows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
       i.name AS instrument, i.sector_id FROM holdings AS h INNER JOIN instrument AS i ON
-      h.instrument_id = i.id ORDER BY id DESC LIMIT 15;`
+      h.instrument_id = i.id ORDER BY id DESC LIMIT ${totalInstruments};`
   );
+  let arr = Array(totalInstruments).fill(0);
+  backgroundColors = arr.map(() => getRandomColor());
+
   doughnutChart(rows);
   compareChart(rows);
   plChart(rows);
@@ -232,7 +238,7 @@ function allHoldingsChart(rows) {
 
   function getConfig(type) {
     let dataset = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < totalInstruments; i++) {
       let label = groupedData[0].data[i].instrument;
       dataset.push(generateDataSets(type, label));
     }
