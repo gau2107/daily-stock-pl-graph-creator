@@ -156,10 +156,24 @@ async function createWindow() {
     totalPlTag.style.color = ${totalPl > 0 ? "'green'" : "'red'"};
     `);
 
+    // total profits and losses
+    win.webContents
+      .executeJavaScript(`const totalProfits = document.getElementById("total-profits");
+    totalProfits.innerHTML = ${rows.filter((r) => r.daily_pl > 0).length};
+    totalProfits.style.color = "green";
+    `);
+    win.webContents
+      .executeJavaScript(`const totalLosses = document.getElementById("total-losses");
+  totalLosses.innerHTML = ${rows.filter((r) => r.daily_pl < 0).length};
+  totalLosses.style.color = "red";
+  `);
+
     // get the highest value, lowest value & streak
     const highestValue = Math.max(...rows.map((row) => row.current_value));
-    const percent =
-      (((highestValue - rows[0].current_value) * 100) / rows[0].current_value).toFixed(2);
+    const percent = (
+      ((highestValue - rows[0].current_value) * 100) /
+      rows[0].current_value
+    ).toFixed(2);
     win.webContents
       .executeJavaScript(`const highestValueTag = document.getElementById("highest-value");
     highestValueTag.innerHTML = ${highestValue};
