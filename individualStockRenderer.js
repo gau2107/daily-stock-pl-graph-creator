@@ -14,9 +14,9 @@ ipcRenderer.send("get-total-instruments");
 ipcRenderer.on("total-instruments", (event, data) => {
   totalInstruments = data;
 });
-
+let connection;
 async function getData() {
-  const connection = await mysql.createConnection({
+  connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "",
@@ -26,16 +26,8 @@ async function getData() {
   [rows] =
     await connection.query(`SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
   FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id;`);
-  [stockRows] = await connection.query(
-    `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${
-      rows.length / totalInstruments
-    };`
-  );
-  let stockData = [...stockRows.reverse()];
-  let xx = stockData.map(
-    (s) => ((s.nifty_50 - stockData[0].nifty_50) * 100) / stockData[0].nifty_50
-  );
-  x(rows, xx);
+
+  generateDataForChart(rows);
 }
 function getRandomColor() {
   const letters = "0123456789ABCDEF";
@@ -46,7 +38,7 @@ function getRandomColor() {
   return color;
 }
 
-function x(rows, stockRows) {
+async function generateDataForChart(rows) {
   let dates = [];
   let values = [];
   for (let i = 0; i < rows.length; i++) {
@@ -74,11 +66,18 @@ function x(rows, stockRows) {
     }
   }
   dates = dates.map((data) => new Date(data).toDateString());
-
-  for (let i = 0; i < values.length; i++) chart(dates, values[i], stockRows);
+  [stockRows] = await connection.query(
+    `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${dates.length};`
+  );
+  let stockData = [...stockRows.reverse()];
+  let finalData = stockData.map(
+    (s) => ((s.nifty_50 - stockData[0].nifty_50) * 100) / stockData[0].nifty_50
+  );
+  for (let i = 0; i < values.length; i++)
+    generateChart(dates, values[i], finalData);
 }
 
-function chart(dates, value, stockRows) {
+function generateChart(dates, value, stockRows) {
   const data = {
     labels: dates,
     datasets: [
