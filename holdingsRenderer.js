@@ -38,7 +38,6 @@ async function getData() {
   );
   let arr = Array(totalInstruments).fill(0);
   backgroundColors = arr.map(() => getRandomColor());
-
   doughnutChart(rows);
   compareChart(rows);
   plChart(rows);
@@ -239,7 +238,7 @@ function allHoldingsChart(rows) {
   function getConfig(type) {
     let dataset = [];
     for (let i = 0; i < totalInstruments; i++) {
-      let label = groupedData[0]?.data[i]?.instrument;
+      let label = groupedData[groupedData.length - 1]?.data[i]?.instrument;
       dataset.push(generateDataSets(type, label));
     }
     const data = {
