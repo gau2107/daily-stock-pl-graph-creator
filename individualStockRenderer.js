@@ -78,6 +78,8 @@ async function generateDataForChart(rows) {
 }
 
 function generateChart(dates, value, stockRows) {
+  if (value.data.length < dates.length)
+    dates = dates.slice(dates.length - value.data.length);
   const data = {
     labels: dates,
     datasets: [
