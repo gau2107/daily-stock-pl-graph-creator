@@ -1,7 +1,6 @@
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const path = require("path");
-const { ipcRenderer } = require("electron");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
@@ -143,6 +142,83 @@ ON
   for (let i = 0; i < neww.length; i++) {
     generateChart(neww[i], finalData);
   }
+  doughnutChart(neww);
+  compareChart(neww);
+}
+
+function doughnutChart(neww) {
+  const labels = neww.map((item) => item.sector);
+  const values = neww.map((item) => parseInt(item.cur_val));
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        data: values,
+        backgroundColor: neww.map((item) => item.color),
+        borderColor: neww.map((item) => item.color),
+        borderWidth: 1,
+      },
+    ],
+  };
+  const config = {
+    type: "doughnut",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+        title: {
+          display: true,
+          text: "Holdings doughnut",
+        },
+      },
+    },
+  };
+
+  const chartCanvas = document.getElementById("doughnut-chart");
+  new Chart(chartCanvas, config);
+}
+function compareChart(neww) {
+  const labels = neww.map((item) => item.sector);
+  const values = neww.map((item) => item.cur_val);
+  const values1 = neww.map(
+    (item) => parseFloat(item.cur_val) - parseFloat(item.p_l)
+  );
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Invested value",
+        data: values1,
+        backgroundColor: "rgba(41, 128, 185, .5)",
+        borderColor: "rgba(41, 128, 185, 1)",
+        borderWidth: 1,
+      },
+      {
+        label: "Current value",
+        data: values,
+        backgroundColor: "rgba(39, 174, 96, .5)",
+        borderColor: "rgba(39, 174, 96, 1)",
+        borderWidth: 1,
+      },
+    ],
+  };
+  const config = {
+    type: "bar",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+      },
+    },
+  };
+  const chartCanvas = document.getElementById("compare-chart");
+  new Chart(chartCanvas, config);
 }
 
 function getRandomColor() {
