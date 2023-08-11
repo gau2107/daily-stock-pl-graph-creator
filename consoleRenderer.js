@@ -108,6 +108,41 @@ ON
       });
     }
   });
+  neww.forEach((x) => {
+    x.graph = [];
+    x.dates = [];
+    x.instrumentNames = [];
+    x.instruments.map((c, parentIndex) => {
+      c.data.map((v, index) => {
+        if (parentIndex === 0) {
+          x.graph.push(parseFloat(v.net_chg));
+          x.dates.push(new Date(v.date).toDateString());
+          v.color = getRandomColor();
+        } else
+          x.graph[index] = (
+            parseFloat(x.graph[index]) + parseFloat(v.net_chg)
+          ).toFixed(2);
+      });
+      x.instrumentNames.push(c.instrument);
+    });
+    x.color = getRandomColor();
+  });
+
+  let len = neww[0].graph.length;
+  [stockRows] = await connection.query(
+    `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${len};`
+  );
+  [firstNifty] = await connection.query(
+    `SELECT nifty_50 FROM daily_pl WHERE id = 1;`
+  );
+  let stockData = [...stockRows.reverse()];
+  let finalData = stockData.map(
+    (s) =>
+      ((s.nifty_50 - firstNifty[0].nifty_50) * 100) / firstNifty[0].nifty_50
+  );
+  for (let i = 0; i < neww.length; i++) {
+    generateChart(neww[i], finalData);
+  }
 }
 
 function getRandomColor() {
@@ -119,64 +154,17 @@ function getRandomColor() {
   return color;
 }
 
-async function generateDataForChart(rows) {
-  let dates = [];
-  let values = [];
-  for (let i = 0; i < rows.length; i++) {
-    let foundIndex = dates.findIndex(
-      (v) => new Date(v).getTime() === new Date(rows[i].date).getTime()
-    );
-    if (foundIndex >= 0) {
-    } else {
-      dates.push(rows[i].date);
-    }
-    let find = values.findIndex((v) => v.instrument === rows[i].instrument);
-    if (find >= 0) {
-      values[find].day_chg.push(parseFloat(rows[i].day_chg));
-      values[find].data.push(
-        parseFloat(values[find].data[values[find].data.length - 1]) +
-          parseFloat(rows[i].day_chg)
-      );
-    } else {
-      values.push({
-        instrument: rows[i].instrument,
-        data: [parseFloat(rows[i].day_chg)],
-        day_chg: [parseFloat(rows[i].day_chg)],
-        color: getRandomColor(),
-      });
-    }
-  }
-  dates = dates.map((data) => new Date(data).toDateString());
-  [stockRows] = await connection.query(
-    `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${dates.length};`
-  );
-  let stockData = [...stockRows.reverse()];
-  let finalData = stockData.map(
-    (s) => ((s.nifty_50 - stockData[0].nifty_50) * 100) / stockData[0].nifty_50
-  );
-  for (let i = 0; i < values.length; i++)
-    generateChart(dates, values[i], finalData);
-}
-
-function generateChart(dates, value, stockRows) {
-  if (value.data.length < dates.length)
-    dates = dates.slice(dates.length - value.data.length);
+function generateChart(value, stockRows) {
+  console.log(value);
+  // return;
   const data = {
-    labels: dates,
+    labels: value.dates,
     datasets: [
       {
-        label: value.instrument,
-        data: value.data,
+        label: `${value.sector} (${value.instrumentNames.join(", ")})`,
+        data: value.graph,
         backgroundColor: value.color,
         borderColor: value.color,
-        borderWidth: 1,
-      },
-      {
-        type: "bar",
-        label: value.instrument + " Day change",
-        data: value.day_chg,
-        backgroundColor: "rgba(200, 200, 255, .5)",
-        borderColor: "rgba(200, 200, 255, 1)",
         borderWidth: 1,
       },
       {
