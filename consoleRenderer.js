@@ -141,6 +141,7 @@ ON
   );
   for (let i = 0; i < neww.length; i++) {
     generateChart(neww[i], finalData);
+    generateChart1(neww[i], finalData);
   }
   doughnutChart(neww);
   compareChart(neww);
@@ -231,8 +232,6 @@ function getRandomColor() {
 }
 
 function generateChart(value, stockRows) {
-  console.log(value);
-  // return;
   const data = {
     labels: value.dates,
     datasets: [
@@ -251,6 +250,44 @@ function generateChart(value, stockRows) {
         borderWidth: 1,
       },
     ],
+  };
+  const config = {
+    type: "line",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+      },
+    },
+  };
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  new Chart(ctx, config);
+  const container = document.getElementById("container");
+  container.appendChild(canvas);
+}
+
+function generateChart1(value, stockRows) {
+  let datasets = [];
+  for (let i = 0; i < value.instruments.length; i++) {
+    let color = getRandomColor();
+    datasets.push({
+      label: value.instruments[i].instrument,
+      data: value.instruments[i].data.map((x) =>
+        Number(Number(x.net_chg).toFixed(2))
+      ),
+      backgroundColor: color,
+      borderColor: color,
+      borderWidth: 1,
+    });
+  }
+  const data = {
+    labels: value.dates,
+
+    datasets: datasets,
   };
   const config = {
     type: "line",

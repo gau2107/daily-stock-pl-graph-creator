@@ -413,7 +413,7 @@ async function createWindow() {
         newWindow.loadFile("console.html");
         newWindow.setMenu(null);
         newWindow.maximize();
-        newWindow.webContents.openDevTools();
+        // newWindow.webContents.openDevTools();
       },
     },
     {
