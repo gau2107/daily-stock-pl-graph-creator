@@ -166,6 +166,8 @@ function doughnutChart(neww) {
     data: data,
     options: {
       responsive: true,
+      maintainAspectRatio: false,
+      cutout: 98,
       plugins: {
         legend: {
           position: "top",
