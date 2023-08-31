@@ -36,15 +36,19 @@ INNER JOIN holdings AS h
 ON
     i.id = h.instrument_id;`);
 
-  let neww = [];
+  let sectorGroupArray = [];
   rows.forEach((product) => {
-    let x = neww.findIndex((p) => p.sector === product.sector_name);
+    // find by sector
+    let x = sectorGroupArray.findIndex((p) => p.sector === product.sector_name);
     if (x >= 0) {
-      let y = neww[x].instruments.findIndex(
+      //true
+      // find by instrument
+      let y = sectorGroupArray[x].instruments.findIndex(
         (p) => p.instrument === product.instrument_name
       );
       if (y >= 0) {
-        neww[x].instruments[y].data.push({
+        //true
+        sectorGroupArray[x].instruments[y].data.push({
           cur_val: product.cur_val,
           p_l: product.p_l,
           date: product.date,
@@ -52,7 +56,8 @@ ON
           day_chg: product.day_chg,
         });
       } else {
-        neww[x].instruments.push({
+        //new instrument
+        sectorGroupArray[x].instruments.push({
           instrument: product.instrument_name,
           data: [
             {
@@ -65,27 +70,29 @@ ON
           ],
         });
       }
-      neww[x].net_percent = neww[x].instruments.reduce(
+      sectorGroupArray[x].net_percent = sectorGroupArray[x].instruments.reduce(
         (acc, instrument) =>
           parseFloat(instrument.data[instrument.data.length - 1].net_chg) + acc,
         0
       );
-      neww[x].p_l = neww[x].instruments.reduce(
+      sectorGroupArray[x].p_l = sectorGroupArray[x].instruments.reduce(
         (acc, instrument) =>
           parseFloat(instrument.data[instrument.data.length - 1].p_l) + acc,
         0
       );
-      neww[x].cur_val = neww[x].instruments.reduce(
+      sectorGroupArray[x].cur_val = sectorGroupArray[x].instruments.reduce(
         (acc, instrument) =>
           parseFloat(instrument.data[instrument.data.length - 1].cur_val) + acc,
         0
       );
 
-      neww[x].net_percent = neww[x].net_percent.toFixed(2);
-      neww[x].p_l = neww[x].p_l.toFixed(2);
-      neww[x].cur_val = neww[x].cur_val.toFixed(2);
+      sectorGroupArray[x].net_percent =
+        sectorGroupArray[x].net_percent.toFixed(2);
+      sectorGroupArray[x].p_l = sectorGroupArray[x].p_l.toFixed(2);
+      sectorGroupArray[x].cur_val = sectorGroupArray[x].cur_val.toFixed(2);
     } else {
-      neww.push({
+      // new sector
+      sectorGroupArray.push({
         sector: product.sector_name,
         instruments: [
           {
@@ -107,11 +114,23 @@ ON
       });
     }
   });
+
+  let neww = JSON.parse(JSON.stringify(sectorGroupArray));
+
   neww.forEach((x) => {
     x.graph = [];
     x.dates = [];
     x.instrumentNames = [];
+    let len = 0;
     x.instruments.map((c, parentIndex) => {
+      len = c.data.length > len ? c.data.length : len;
+      if (c.data.length < len) {
+        let f = len - c.data.length;
+        let temp = { cur_val: null, net_chg: undefined };
+        for (let i = 0; i < f; i++) {
+          c.data.unshift(temp);
+        }
+      }
       c.data.map((v, index) => {
         if (parentIndex === 0) {
           x.graph.push(parseFloat(v.net_chg));
@@ -272,9 +291,15 @@ function generateChart(value, stockRows) {
   container.appendChild(canvas);
 }
 
-function generateChart1(value, stockRows) {
+function generateChart1(value) {
   let datasets = [];
   for (let i = 0; i < value.instruments.length; i++) {
+    if (value.instruments[i].data.length < value.dates.length) {
+      let len = value.dates.length - value.instruments[i].data.length;
+      for (let j = 0; j < len; j++) {
+        value.instruments[i].data.unshift({ net_chg: undefined });
+      }
+    }
     let color = getRandomColor();
     datasets.push({
       label: value.instruments[i].instrument,
