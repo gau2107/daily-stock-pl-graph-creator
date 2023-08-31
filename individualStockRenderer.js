@@ -80,6 +80,13 @@ async function generateDataForChart(rows) {
 function generateChart(dates, value, stockRows) {
   if (value.data.length < dates.length)
     dates = dates.slice(dates.length - value.data.length);
+  function colors(opacity) {
+    return value.day_chg.map((day_chg) =>
+      day_chg < 0
+        ? `rgba(255, 110, 100, ${opacity})`
+        : `rgba(0, 125, 10, ${opacity})`
+    );
+  }
   const data = {
     labels: dates,
     datasets: [
@@ -94,8 +101,9 @@ function generateChart(dates, value, stockRows) {
         type: "bar",
         label: value.instrument + " Day change",
         data: value.day_chg,
-        backgroundColor: "rgba(200, 200, 255, .5)",
-        borderColor: "rgba(200, 200, 255, 1)",
+        borderColor: colors(1),
+        backgroundColor: colors(0.5),
+
         borderWidth: 1,
       },
       {

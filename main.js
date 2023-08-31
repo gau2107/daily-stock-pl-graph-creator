@@ -64,19 +64,19 @@ async function createWindow() {
 
   function getDailyPlDataForChart(rows) {
     const dailyChartData = rows.map((row) => row.daily_pl);
-    const colors = rows.map((row) =>
-      row.daily_pl < 0 ? "rgba(255, 110, 100, .5)" : "rgba(0, 125, 10, .5)"
-    );
+    function colors(opacity) {
+      return rows.map((row) =>
+        row.daily_pl < 0 ? `rgba(255, 110, 100, ${opacity})` : `rgba(0, 125, 10, ${opacity})`
+      );
+    }
     return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
           label: "Daily PL",
           data: dailyChartData,
-          borderColor: rows.map((row) =>
-            row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(0, 125, 10, 1)"
-          ),
-          backgroundColor: colors,
+          borderColor: colors(1),
+          backgroundColor: colors(.5),
           borderWidth: 1,
         },
       ],
@@ -276,9 +276,9 @@ async function createWindow() {
   `);
   });
 
-  ipcMain.on('get-total-instruments', (event) => {
+  ipcMain.on("get-total-instruments", (event) => {
     const data = win.totalInstruments || null;
-    event.sender.send('total-instruments', data);
+    event.sender.send("total-instruments", data);
   });
 
   ipcMain.on("weekly-data", async () => {
