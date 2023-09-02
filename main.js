@@ -15,7 +15,7 @@ async function createWindow() {
     password: "",
     database: dbConnectionString,
   });
-  [instruments] = await connection.query("SELECT * from instrument");
+  [instruments] = await connection.query("SELECT * from instrument where is_active = true");
 
   const win = new BrowserWindow({
     width: 800,

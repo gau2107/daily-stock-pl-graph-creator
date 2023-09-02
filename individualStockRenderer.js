@@ -8,12 +8,6 @@ const envFilePath =
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
-let totalInstruments;
-ipcRenderer.send("get-total-instruments");
-
-ipcRenderer.on("total-instruments", (event, data) => {
-  totalInstruments = data;
-});
 let connection;
 async function getData() {
   connection = await mysql.createConnection({

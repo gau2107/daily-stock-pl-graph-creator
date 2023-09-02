@@ -216,6 +216,7 @@ function allHoldingsChart(rows) {
     else return 0;
   }
   function generateDataSets(type, label) {
+    let color = getRandomColor();
     let arr = [];
     for (let i = 0; i < groupedData.length; i++) {
       let found = groupedData[i].data.find((x) => x.instrument === label);
@@ -226,8 +227,8 @@ function allHoldingsChart(rows) {
     return {
       label: label,
       data: arr,
-      backgroundColor: getRandomColor(),
-      borderColor: getRandomColor(),
+      backgroundColor: color,
+      borderColor: color,
       borderWidth: 1.5,
     };
   }

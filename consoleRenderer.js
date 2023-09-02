@@ -34,7 +34,7 @@ ON
     s.id = i.sector_id
 INNER JOIN holdings AS h
 ON
-    i.id = h.instrument_id;`);
+    i.id = h.instrument_id where i.is_active = true;`);
 
   let sectorGroupArray = [];
   rows.forEach((product) => {
