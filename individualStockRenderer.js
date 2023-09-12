@@ -19,7 +19,7 @@ async function getData() {
 
   [rows] =
     await connection.query(`SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
-  FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id;`);
+  FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id where i.is_active = true;;`);
 
   generateDataForChart(rows);
 }
