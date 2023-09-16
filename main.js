@@ -160,14 +160,19 @@ async function createWindow() {
     `);
 
     // total profits and losses
+    const totalProfitCounts = rows.filter((r) => r.daily_pl > 0).length;
+    const totalProfitPercent = ((totalProfitCounts * 100) / (rows.length)).toFixed(2);
     win.webContents
       .executeJavaScript(`const totalProfits = document.getElementById("total-profits");
-    totalProfits.innerHTML = ${rows.filter((r) => r.daily_pl > 0).length};
+    totalProfits.innerHTML = ${totalProfitCounts};
+    totalProfits.innerHTML = totalProfits.innerHTML + " "+"("+${totalProfitPercent}+"%)";        
     totalProfits.style.color = "green";
     `);
     win.webContents
       .executeJavaScript(`const totalLosses = document.getElementById("total-losses");
   totalLosses.innerHTML = ${rows.filter((r) => r.daily_pl < 0).length};
+  totalLosses.innerHTML = totalLosses.innerHTML + " "+"("+${100 - totalProfitPercent}+"%)";        
+    
   totalLosses.style.color = "red";
   `);
 

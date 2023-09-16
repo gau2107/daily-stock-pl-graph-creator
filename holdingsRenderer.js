@@ -34,7 +34,7 @@ async function getData() {
   [rows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
       i.name AS instrument, i.sector_id FROM holdings AS h INNER JOIN instrument AS i ON
-      h.instrument_id = i.id ORDER BY id DESC LIMIT ${totalInstruments};`
+      h.instrument_id = i.id WHERE i.is_active = true ORDER BY id DESC LIMIT ${totalInstruments};`
   );
   let arr = Array(totalInstruments).fill(0);
   backgroundColors = arr.map(() => getRandomColor());
@@ -45,9 +45,83 @@ async function getData() {
 
   [allRows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
-    FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id;`
+    FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id WHERE i.is_active = true;`
   );
-  allHoldingsChart(allRows);
+  allHoldingsChart(allRows, rows);
+}
+function displayData(parentData, instruments) {
+  const itemsPerPage = 10; // Number of items to display per page
+  const dataBody = document.getElementById('dataBody');
+  const tableHead = document.getElementById('tableHead');
+  const pagination = document.getElementById('pagination');
+
+  // Calculate the number of pages
+  const totalPages = Math.ceil(parentData.length / itemsPerPage);
+
+  for (let i = 0; i < instruments.length; i++) {
+    const cell = document.createElement('th');
+    cell.scope = "col";
+    cell.textContent = instruments[i]['instrument'];
+    tableHead.appendChild(cell);
+
+  }
+  // Function to display a specific page
+  function displayPage(pageNumber) {
+    let data = JSON.parse(JSON.stringify(parentData)).reverse();
+
+    dataBody.innerHTML = ''; // Clear the table body
+
+    // Calculate the starting and ending index of the items for the current page
+    const startIndex = (pageNumber - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+
+    // Loop through the items of the current page and populate the table
+    for (let i = startIndex; i < endIndex && i < data.length; i++) {
+      const row = document.createElement('tr');
+
+      // Loop through each key in the object
+      data[i]['date'] = new Date(data[i]['date']).toDateString()
+      const cell = document.createElement('td');
+      cell.textContent = data[i]['date'];
+      row.appendChild(cell);
+      for (let j = 0; j < instruments.length; j++) {
+        const content = data[i]['data'].find((d) => d.instrument === instruments[j].instrument);
+        const cell = document.createElement('td');
+        cell.textContent = content?.day_chg ? parseFloat(content?.day_chg)?.toFixed(2) : '-';
+        cell.style.color = content?.day_chg > 0 ? 'green' : 'red';
+        row.appendChild(cell);
+      }
+
+
+
+      dataBody.appendChild(row);
+    }
+  }
+
+  // Function to create pagination links
+  function createPaginationLinks() {
+    pagination.innerHTML = ''; // Clear the pagination links
+
+    // Create and append the pagination links
+    for (let i = 1; i <= totalPages; i++) {
+      const link = document.createElement('li');
+      link.classList.add('page-item');
+      link.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+      link.addEventListener('click', (event) => {
+        // Prevent the default behavior of the click event
+        event.preventDefault();
+        displayPage(i);
+      });
+      pagination.appendChild(link);
+    }
+  }
+
+  // Display the first page initially
+  displayPage(1);
+
+  // Create the pagination links
+  createPaginationLinks();
 }
 
 function doughnutChart() {
@@ -86,6 +160,7 @@ function doughnutChart() {
   const chartCanvas = document.getElementById("doughnut-chart");
   new Chart(chartCanvas, config);
 }
+
 function compareChart(rows) {
   const labels = rows.map((item) => item.instrument);
   const values = rows.map((item) => item.cur_val);
@@ -195,7 +270,7 @@ function plValueChart(rows) {
   new Chart(chartCanvas, config);
 }
 
-function allHoldingsChart(rows) {
+function allHoldingsChart(rows, instruments) {
   const groupedData = rows.reduce((acc, obj) => {
     const date = new Date(obj.date).getTime();
     const existingGroup = acc.find(
@@ -210,6 +285,7 @@ function allHoldingsChart(rows) {
   }, []);
 
   const labels = groupedData.map((data) => new Date(data.date).toDateString());
+  displayData(groupedData, instruments);
 
   function getPercent(found) {
     if (found) return (100 * found.p_l) / (found.avg_cost * found.qty);
@@ -233,8 +309,7 @@ function allHoldingsChart(rows) {
     };
   }
 
-  const chartCanvas = document.getElementById("daily-chart");
-  new Chart(chartCanvas, getConfig("daily"));
+
   const chartCanvas1 = document.getElementById("total-chart");
   new Chart(chartCanvas1, getConfig("total"));
 

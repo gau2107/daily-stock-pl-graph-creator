@@ -51,3 +51,20 @@
 .mr-10 {
   margin-right: 10px;
 }
+
+/* Target the scrollbar track */
+::-webkit-scrollbar {
+  width: 6px; /* Width of the scrollbar */
+  height: 6px;
+}
+
+/* Target the scrollbar handle (thumb) */
+::-webkit-scrollbar-thumb {
+  background: #888; /* Color of the thumb */
+  border-radius: 6px; /* Roundness of the thumb */
+}
+
+/* Target the scrollbar handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Color of the thumb on hover */
+}
