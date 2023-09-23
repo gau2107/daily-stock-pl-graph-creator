@@ -160,7 +160,6 @@ ON
   );
   for (let i = 0; i < neww.length; i++) {
     generateChart(neww[i], finalData);
-    generateChart1(neww[i], finalData);
   }
   doughnutChart(neww);
   compareChart(neww);
@@ -271,50 +270,6 @@ function generateChart(value, stockRows) {
         borderWidth: 1,
       },
     ],
-  };
-  const config = {
-    type: "line",
-    data: data,
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "top",
-        },
-      },
-    },
-  };
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  new Chart(ctx, config);
-  const container = document.getElementById("container");
-  container.appendChild(canvas);
-}
-
-function generateChart1(value) {
-  let datasets = [];
-  for (let i = 0; i < value.instruments.length; i++) {
-    if (value.instruments[i].data.length < value.dates.length) {
-      let len = value.dates.length - value.instruments[i].data.length;
-      for (let j = 0; j < len; j++) {
-        value.instruments[i].data.unshift({ net_chg: undefined });
-      }
-    }
-    let color = getRandomColor();
-    datasets.push({
-      label: value.instruments[i].instrument,
-      data: value.instruments[i].data.map((x) =>
-        Number(Number(x.net_chg).toFixed(2))
-      ),
-      backgroundColor: color,
-      borderColor: color,
-      borderWidth: 1,
-    });
-  }
-  const data = {
-    labels: value.dates,
-
-    datasets: datasets,
   };
   const config = {
     type: "line",
