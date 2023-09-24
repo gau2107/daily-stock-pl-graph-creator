@@ -60,6 +60,8 @@ instrumentForm.addEventListener("submit", (event) => {
 
 // load dropdown with sector values
 const selectBox = document.getElementById("sector-value");
+const editSelectBox = document.getElementById("edit-sector-value");
+const editInstrumentBox = document.getElementById("edit-instrument-value");
 const query = "SELECT id, name FROM sector";
 connection.query(query, (err, rows) => {
   if (err) throw err;
@@ -70,5 +72,30 @@ connection.query(query, (err, rows) => {
     option.value = row.id;
     option.text = row.name;
     selectBox.appendChild(option);
+    editSelectBox.appendChild(option);
   });
+
+  let instrumentRows = [];
+  const instrumentQuery = "SELECT id, name, is_active, sector_id FROM instrument";
+  connection.query(instrumentQuery, (err, rows) => {
+    if (err) throw err;
+    instrumentRows = [...rows];
+    // Populate the select box options
+    rows.forEach((row) => {
+      const option = document.createElement("option");
+      option.value = row.id;
+      option.text = row.name;
+      editInstrumentBox.appendChild(option);
+    });
+  });
+
+
+  editInstrumentBox.addEventListener('change', function () {
+    let temp = instrumentRows.find(obj => obj.id == editInstrumentBox.value);
+    const checkbox = document.getElementById('edit-checkbox'); // Replace 'myCheckbox' with your checkbox's ID
+    checkbox.checked = temp.is_active;
+    editSelectBox.value = temp.sector_id;
+  });
+
+
 });
