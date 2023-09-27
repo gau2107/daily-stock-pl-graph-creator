@@ -58,6 +58,36 @@ instrumentForm.addEventListener("submit", (event) => {
   document.getElementById("instrument-form").reset();
 });
 
+const editForm = document.getElementById("edit-instrument-form");
+editForm.addEventListener("submit", (event) => {
+  event.preventDefault(); // Prevent the default form submission behavior
+
+  // Get form data
+  const investmentValue = document.getElementById("edit-instrument-value").value;
+  const sectorValue = document.getElementById("edit-sector-value").value;
+  const checkboxValue = document.getElementById("edit-checkbox").checked;
+  console.log(investmentValue,
+    sectorValue,
+    checkboxValue)
+
+
+
+
+  // Save form data to MySQL database
+  const query =
+    `UPDATE instrument SET sector_id=${sectorValue}, is_active=${checkboxValue} WHERE id=${investmentValue}`
+  connection.query(query, (err, result) => {
+    if (err) {
+      console.log(err);
+      throw err;
+    }
+    ipcRenderer.send("reload-app");
+  });
+
+  // Reset form
+  document.getElementById("base-form").reset();
+});
+
 // load dropdown with sector values
 const selectBox = document.getElementById("sector-value");
 const editSelectBox = document.getElementById("edit-sector-value");
