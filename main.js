@@ -48,14 +48,17 @@ async function createWindow() {
   });
 
   function getCurrentDataForChart(rows) {
+    let bgColors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, .5)" : "rgba(39, 174, 96, .5)");
+    let colors =  rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(39, 174, 96, 1)");;
+    let data = rows.map((row) => row.current_value);
     return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
           label: "Current Value",
-          data: rows.map((row) => row.current_value),
-          borderColor: "rgba(100, 150, 200, 1)",
-          backgroundColor: "rgba(100, 150, 200, 0.2)",
+          data: data,
+          backgroundColor: bgColors,
+          borderColor: colors,
           borderWidth: 1,
         },
       ],

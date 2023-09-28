@@ -291,7 +291,7 @@ function allHoldingsChart(rows, instruments) {
     if (found) return (100 * found.p_l) / (found.avg_cost * found.qty);
     else return 0;
   }
-  function generateDataSets(type, label) {
+  function generateDataSets(type, label, hidden) {
     let color = getRandomColor();
     let arr = [];
     for (let i = 0; i < groupedData.length; i++) {
@@ -306,6 +306,7 @@ function allHoldingsChart(rows, instruments) {
       backgroundColor: color,
       borderColor: color,
       borderWidth: 1.5,
+      hidden: hidden
     };
   }
 
@@ -317,7 +318,7 @@ function allHoldingsChart(rows, instruments) {
     let dataset = [];
     for (let i = 0; i < totalInstruments; i++) {
       let label = groupedData[groupedData.length - 1]?.data[i]?.instrument;
-      dataset.push(generateDataSets(type, label));
+      dataset.push(generateDataSets(type, label, i !== 0));
     }
     const data = {
       labels: labels,
