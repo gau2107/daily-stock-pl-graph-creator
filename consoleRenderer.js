@@ -126,7 +126,7 @@ ON
       len = c.data.length > len ? c.data.length : len;
       if (c.data.length < len) {
         let f = len - c.data.length;
-        let temp = { cur_val: null, net_chg: undefined };
+        let temp = { cur_val: 0, net_chg: 0 };
         for (let i = 0; i < f; i++) {
           c.data.unshift(temp);
         }
