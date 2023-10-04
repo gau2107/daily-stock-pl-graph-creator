@@ -66,12 +66,6 @@ editForm.addEventListener("submit", (event) => {
   const investmentValue = document.getElementById("edit-instrument-value").value;
   const sectorValue = document.getElementById("edit-sector-value").value;
   const checkboxValue = document.getElementById("edit-checkbox").checked;
-  console.log(investmentValue,
-    sectorValue,
-    checkboxValue)
-
-
-
 
   // Save form data to MySQL database
   const query =
@@ -101,7 +95,7 @@ connection.query(query, (err, rows) => {
     const option = document.createElement("option");
     option.value = row.id;
     option.text = row.name;
-    selectBox.appendChild(option);
+    selectBox.appendChild(option.cloneNode(true));
     editSelectBox.appendChild(option);
   });
 
