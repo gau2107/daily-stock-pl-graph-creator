@@ -120,7 +120,10 @@ ON
   neww.forEach((x) => {
     x.graph = [];
     x.dates = [];
+    x.abra = [];
+    x.dabra = [];
     x.instrumentNames = [];
+    x.invested_val = x.cur_val - x.p_l
     let len = 0;
     x.instruments.map((c, parentIndex) => {
       len = c.data.length > len ? c.data.length : len;
@@ -132,19 +135,36 @@ ON
         }
       }
       c.data.map((v, index) => {
+        v.cur_val = parseFloat(v.cur_val)
         if (parentIndex === 0) {
           x.graph.push(parseFloat(v.net_chg));
+          x.abra.push(v.cur_val);
+          x.dabra.push(((x.abra[x.abra.length - 1] - parseFloat(x.invested_val)) * 100) / parseFloat(x.invested_val));
           x.dates.push(new Date(v.date).toDateString());
           v.color = getRandomColor();
-        } else
+        } else {
           x.graph[index] = (
             parseFloat(x.graph[index]) + parseFloat(v.net_chg)
           ).toFixed(2);
+          x.abra[index] = (
+            parseFloat(x.abra[index]) + v.cur_val
+          ).toFixed(2);
+          x.dabra[index] = (((x.abra[index] - parseFloat(x.invested_val)) * 100) / parseFloat(x.invested_val));
+        }
+
+        if (index === 0) {
+          v.percentChange = 0; // Initial value
+        } else {
+          const prevCurVal = c.data[index - 1].cur_val;
+          const curCurVal = v.cur_val;
+          v.percentChange = ((curCurVal - prevCurVal) / prevCurVal) * 100;
+        }
       });
       x.instrumentNames.push(c.instrument);
     });
     x.color = getRandomColor();
   });
+
 
   let len = neww[0].graph.length;
   [stockRows] = await connection.query(
@@ -205,7 +225,7 @@ function compareChart(neww) {
   const labels = neww.map((item) => item.sector);
   const values = neww.map((item) => item.cur_val);
   const values1 = neww.map(
-    (item) => parseFloat(item.cur_val) - parseFloat(item.p_l)
+    (item) => item.invested_val
   );
   const data = {
     labels: labels,
@@ -257,7 +277,7 @@ function generateChart(value, stockRows) {
     datasets: [
       {
         label: `${value.sector} (${value.instrumentNames.join(", ")})`,
-        data: value.graph,
+        data: value.dabra,
         backgroundColor: value.color,
         borderColor: value.color,
         borderWidth: 1,
