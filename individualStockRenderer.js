@@ -1,7 +1,6 @@
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const path = require("path");
-const { ipcRenderer } = require("electron");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
