@@ -115,58 +115,62 @@ ON
     }
   });
 
-  let neww = JSON.parse(JSON.stringify(sectorGroupArray));
+  let copiedSectorGroupArray = JSON.parse(JSON.stringify(sectorGroupArray));
 
-  neww.forEach((x) => {
-    x.graph = [];
-    x.dates = [];
-    x.abra = [];
-    x.dabra = [];
-    x.instrumentNames = [];
-    x.invested_val = x.cur_val - x.p_l
-    let len = 0;
-    x.instruments.map((c, parentIndex) => {
-      len = c.data.length > len ? c.data.length : len;
-      if (c.data.length < len) {
-        let f = len - c.data.length;
+  console.log(copiedSectorGroupArray)
+  copiedSectorGroupArray.forEach((sectorObj) => {
+    sectorObj.graph = [];
+    sectorObj.dates = [];
+    sectorObj.curValArray = [];
+    sectorObj.investedVal = [];
+    sectorObj.changePercent = [];
+    sectorObj.instrumentNames = [];
+    sectorObj.invested_val = sectorObj.cur_val - sectorObj.p_l
+    let individualInstrumentArrayLength = 0;
+
+    sectorObj.instruments.map((instrumentObj, parentIndex) => {
+      individualInstrumentArrayLength = instrumentObj.data.length > individualInstrumentArrayLength ? instrumentObj.data.length : individualInstrumentArrayLength;
+      if (instrumentObj.data.length < individualInstrumentArrayLength) {
+        let lengthDifference = individualInstrumentArrayLength - instrumentObj.data.length;
         let temp = { cur_val: 0, net_chg: 0 };
-        for (let i = 0; i < f; i++) {
-          c.data.unshift(temp);
+        for (let i = 0; i < lengthDifference; i++) {
+          instrumentObj.data.unshift(temp);
         }
       }
-      c.data.map((v, index) => {
-        v.cur_val = parseFloat(v.cur_val)
+      instrumentObj.data.map((individualInstrumentObj, index) => {
+
+        individualInstrumentObj.cur_val = parseFloat(individualInstrumentObj.cur_val)
         if (parentIndex === 0) {
-          x.graph.push(parseFloat(v.net_chg));
-          x.abra.push(v.cur_val);
-          x.dabra.push(((x.abra[x.abra.length - 1] - parseFloat(x.invested_val)) * 100) / parseFloat(x.invested_val));
-          x.dates.push(new Date(v.date).toDateString());
-          v.color = getRandomColor();
+          sectorObj.graph.push(parseFloat(individualInstrumentObj.net_chg));
+          sectorObj.curValArray.push(individualInstrumentObj.cur_val);
+          sectorObj.changePercent.push(((sectorObj.curValArray[sectorObj.curValArray.length - 1] - parseFloat(sectorObj.invested_val)) * 100) / parseFloat(sectorObj.invested_val));
+          sectorObj.dates.push(new Date(individualInstrumentObj.date).toDateString());
+          individualInstrumentObj.color = getRandomColor();
         } else {
-          x.graph[index] = (
-            parseFloat(x.graph[index]) + parseFloat(v.net_chg)
+          sectorObj.graph[index] = (
+            parseFloat(sectorObj.graph[index]) + parseFloat(individualInstrumentObj.net_chg)
           ).toFixed(2);
-          x.abra[index] = (
-            parseFloat(x.abra[index]) + v.cur_val
+          sectorObj.curValArray[index] = (
+            parseFloat(sectorObj.curValArray[index]) + individualInstrumentObj.cur_val
           ).toFixed(2);
-          x.dabra[index] = (((x.abra[index] - parseFloat(x.invested_val)) * 100) / parseFloat(x.invested_val));
+          sectorObj.changePercent[index] = (((sectorObj.curValArray[index] - parseFloat(sectorObj.invested_val)) * 100) / parseFloat(sectorObj.invested_val));
         }
 
         if (index === 0) {
-          v.percentChange = 0; // Initial value
+          individualInstrumentObj.percentChange = 0; // Initial value
         } else {
-          const prevCurVal = c.data[index - 1].cur_val;
-          const curCurVal = v.cur_val;
-          v.percentChange = ((curCurVal - prevCurVal) / prevCurVal) * 100;
+          const prevCurVal = instrumentObj.data[index - 1].cur_val;
+          const curCurVal = individualInstrumentObj.cur_val;
+          individualInstrumentObj.percentChange = ((curCurVal - prevCurVal) / prevCurVal) * 100;
         }
       });
-      x.instrumentNames.push(c.instrument);
+      sectorObj.instrumentNames.push(instrumentObj.instrument);
     });
-    x.color = getRandomColor();
+    sectorObj.color = getRandomColor();
   });
 
 
-  let len = neww[0].graph.length;
+  let len = copiedSectorGroupArray[0].graph.length;
   [stockRows] = await connection.query(
     `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${len};`
   );
@@ -178,11 +182,11 @@ ON
     (s) =>
       ((s.nifty_50 - firstNifty[0].nifty_50) * 100) / firstNifty[0].nifty_50
   );
-  for (let i = 0; i < neww.length; i++) {
-    generateChart(neww[i], finalData);
+  for (let i = 0; i < copiedSectorGroupArray.length; i++) {
+    generateChart(copiedSectorGroupArray[i], finalData);
   }
-  doughnutChart(neww);
-  compareChart(neww);
+  doughnutChart(copiedSectorGroupArray);
+  compareChart(copiedSectorGroupArray);
 }
 
 function doughnutChart(neww) {
@@ -277,7 +281,7 @@ function generateChart(value, stockRows) {
     datasets: [
       {
         label: `${value.sector} (${value.instrumentNames.join(", ")})`,
-        data: value.dabra,
+        data: value.changePercent,
         backgroundColor: value.color,
         borderColor: value.color,
         borderWidth: 1,
