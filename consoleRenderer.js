@@ -193,16 +193,16 @@ ON
   compareChart(copiedSectorGroupArray);
 }
 
-function doughnutChart(neww) {
-  const labels = neww.map((item) => item.sector);
-  const values = neww.map((item) => parseInt(item.cur_val));
+function doughnutChart(sectorGroupArray) {
+  const labels = sectorGroupArray.map((item) => item.sector);
+  const values = sectorGroupArray.map((item) => parseInt(item.cur_val));
   const data = {
     labels: labels,
     datasets: [
       {
         data: values,
-        backgroundColor: neww.map((item) => item.color),
-        borderColor: neww.map((item) => item.color),
+        backgroundColor: sectorGroupArray.map((item) => item.color),
+        borderColor: sectorGroupArray.map((item) => item.color),
         borderWidth: 1,
       },
     ],
@@ -229,10 +229,10 @@ function doughnutChart(neww) {
   const chartCanvas = document.getElementById("doughnut-chart");
   new Chart(chartCanvas, config);
 }
-function compareChart(neww) {
-  const labels = neww.map((item) => item.sector);
-  const values = neww.map((item) => item.cur_val);
-  const values1 = neww.map(
+function compareChart(sectorGroupArray) {
+  const labels = sectorGroupArray.map((item) => item.sector);
+  const currentValues = sectorGroupArray.map((item) => item.cur_val);
+  const investedValues = sectorGroupArray.map(
     (item) => item.invested_val
   );
   const data = {
@@ -240,14 +240,14 @@ function compareChart(neww) {
     datasets: [
       {
         label: "Invested value",
-        data: values1,
+        data: investedValues,
         backgroundColor: "rgba(41, 128, 185, .5)",
         borderColor: "rgba(41, 128, 185, 1)",
         borderWidth: 1,
       },
       {
         label: "Current value",
-        data: values,
+        data: currentValues,
         backgroundColor: "rgba(39, 174, 96, .5)",
         borderColor: "rgba(39, 174, 96, 1)",
         borderWidth: 1,
