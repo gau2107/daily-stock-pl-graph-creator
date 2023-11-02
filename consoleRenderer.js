@@ -117,7 +117,6 @@ ON
 
   let copiedSectorGroupArray = JSON.parse(JSON.stringify(sectorGroupArray));
 
-  console.log(copiedSectorGroupArray)
   copiedSectorGroupArray.forEach((sectorObj) => {
     sectorObj.graph = [];
     sectorObj.dates = [];
@@ -138,22 +137,27 @@ ON
         }
       }
       instrumentObj.data.map((individualInstrumentObj, index) => {
-
         individualInstrumentObj.cur_val = parseFloat(individualInstrumentObj.cur_val)
         if (parentIndex === 0) {
           sectorObj.graph.push(parseFloat(individualInstrumentObj.net_chg));
+          sectorObj.investedVal.push(individualInstrumentObj.cur_val - individualInstrumentObj.p_l);
           sectorObj.curValArray.push(individualInstrumentObj.cur_val);
-          sectorObj.changePercent.push(((sectorObj.curValArray[sectorObj.curValArray.length - 1] - parseFloat(sectorObj.invested_val)) * 100) / parseFloat(sectorObj.invested_val));
+          sectorObj.changePercent.push(((sectorObj.curValArray[sectorObj.curValArray.length - 1] - parseFloat(sectorObj.investedVal[index])) * 100) / parseFloat(sectorObj.investedVal[index]));
           sectorObj.dates.push(new Date(individualInstrumentObj.date).toDateString());
           individualInstrumentObj.color = getRandomColor();
         } else {
           sectorObj.graph[index] = (
             parseFloat(sectorObj.graph[index]) + parseFloat(individualInstrumentObj.net_chg)
           ).toFixed(2);
+
+          sectorObj.investedVal[index] = (
+            parseFloat(sectorObj.investedVal[index]) + (individualInstrumentObj.cur_val - individualInstrumentObj.p_l || 0)
+          );
+
           sectorObj.curValArray[index] = (
             parseFloat(sectorObj.curValArray[index]) + individualInstrumentObj.cur_val
           ).toFixed(2);
-          sectorObj.changePercent[index] = (((sectorObj.curValArray[index] - parseFloat(sectorObj.invested_val)) * 100) / parseFloat(sectorObj.invested_val));
+          sectorObj.changePercent[index] = (((sectorObj.curValArray[index] - parseFloat(sectorObj.investedVal[index])) * 100) / parseFloat(sectorObj.investedVal[index]));
         }
 
         if (index === 0) {
