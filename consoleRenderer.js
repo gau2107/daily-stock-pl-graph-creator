@@ -288,14 +288,16 @@ function generateChart(value, stockRows) {
         data: value.changePercent,
         backgroundColor: value.color,
         borderColor: value.color,
-        borderWidth: 1,
+        pointStyle: false,
+        tension: .2
       },
       {
         label: "Nifty 50",
         data: stockRows,
         backgroundColor: "rgba(200, 100, 100, .5)",
         borderColor: "rgba(200, 100, 100, 1)",
-        borderWidth: 1,
+        pointStyle: false,
+        tension: .2
       },
     ],
   };

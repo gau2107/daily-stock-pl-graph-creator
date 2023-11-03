@@ -88,7 +88,8 @@ function generateChart(dates, value, stockRows) {
         data: value.data,
         backgroundColor: value.color,
         borderColor: value.color,
-        borderWidth: 1,
+        pointStyle: false,
+        tension: .2
       },
       {
         type: "bar",
@@ -104,7 +105,8 @@ function generateChart(dates, value, stockRows) {
         data: stockRows,
         backgroundColor: "rgba(200, 100, 100, .5)",
         borderColor: "rgba(200, 100, 100, 1)",
-        borderWidth: 1,
+        pointStyle: false,
+        tension: .2
       },
     ],
   };

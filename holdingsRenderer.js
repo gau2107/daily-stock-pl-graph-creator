@@ -305,7 +305,8 @@ function allHoldingsChart(rows, instruments) {
       data: arr,
       backgroundColor: color,
       borderColor: color,
-      borderWidth: 1.5,
+      pointStyle: false,
+      tension: .2,
       hidden: hidden
     };
   }

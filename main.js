@@ -49,7 +49,7 @@ async function createWindow() {
 
   function getCurrentDataForChart(rows) {
     let bgColors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, .5)" : "rgba(39, 174, 96, .5)");
-    let colors =  rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(39, 174, 96, 1)");;
+    let colors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(39, 174, 96, 1)");;
     let data = rows.map((row) => row.current_value);
     return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
@@ -59,7 +59,8 @@ async function createWindow() {
           data: data,
           backgroundColor: bgColors,
           borderColor: colors,
-          borderWidth: 1,
+          pointStyle: false,
+          tension: .2
         },
       ],
     };
@@ -98,7 +99,8 @@ async function createWindow() {
           ),
           borderColor: "rgba(255, 110, 100, 1)",
           backgroundColor: "rgba(255, 110, 100, .5)",
-          borderWidth: 1,
+          pointStyle: false,
+          tension: .2
         },
         {
           label: "Total P/L",
@@ -109,7 +111,8 @@ async function createWindow() {
           ),
           borderColor: "rgba(0, 125, 10, 1)",
           backgroundColor: "rgba(0, 125, 10, .5)",
-          borderWidth: 1,
+          pointStyle: false,
+          tension: .2
         },
       ],
     };
