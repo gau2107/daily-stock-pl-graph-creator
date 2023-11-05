@@ -80,11 +80,13 @@ function generateChart(dates, value, stockRows) {
         : `rgba(0, 125, 10, ${opacity})`
     );
   }
+  let barLabel = `(${((value.day_chg.filter(day_chg => day_chg > 0).length * 100) / value.day_chg.length).toFixed(2)}%)`
+  let lineLabel = `(${value.data[value.data.length - 1].toFixed(2)}%)`
   const data = {
     labels: dates,
     datasets: [
       {
-        label: value.instrument,
+        label: value.instrument + lineLabel,
         data: value.data,
         backgroundColor: value.color,
         borderColor: value.color,
@@ -93,7 +95,7 @@ function generateChart(dates, value, stockRows) {
       },
       {
         type: "bar",
-        label: value.instrument + " Day change",
+        label: value.instrument + barLabel,
         data: value.day_chg,
         borderColor: colors(1),
         backgroundColor: colors(0.5),
