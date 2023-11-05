@@ -120,6 +120,8 @@ ON
   copiedSectorGroupArray.forEach((sectorObj) => {
     sectorObj.graph = [];
     sectorObj.dates = [];
+    sectorObj.dayChg = [];
+    sectorObj.plArray = [];
     sectorObj.curValArray = [];
     sectorObj.investedVal = [];
     sectorObj.changePercent = [];
@@ -142,6 +144,7 @@ ON
           sectorObj.graph.push(parseFloat(individualInstrumentObj.net_chg));
           sectorObj.investedVal.push(individualInstrumentObj.cur_val - individualInstrumentObj.p_l);
           sectorObj.curValArray.push(individualInstrumentObj.cur_val);
+          sectorObj.plArray.push(parseFloat(individualInstrumentObj.p_l));
           sectorObj.changePercent.push(((sectorObj.curValArray[sectorObj.curValArray.length - 1] - parseFloat(sectorObj.investedVal[index])) * 100) / parseFloat(sectorObj.investedVal[index]));
           sectorObj.dates.push(new Date(individualInstrumentObj.date).toDateString());
           individualInstrumentObj.color = getRandomColor();
@@ -157,6 +160,11 @@ ON
           sectorObj.curValArray[index] = (
             parseFloat(sectorObj.curValArray[index]) + individualInstrumentObj.cur_val
           ).toFixed(2);
+
+          sectorObj.plArray[index] = (
+            parseFloat(sectorObj.plArray[index]) + (parseFloat(individualInstrumentObj.p_l) || 0)
+          )
+
           sectorObj.changePercent[index] = (((sectorObj.curValArray[index] - parseFloat(sectorObj.investedVal[index])) * 100) / parseFloat(sectorObj.investedVal[index]));
         }
 
@@ -171,9 +179,11 @@ ON
       sectorObj.instrumentNames.push(instrumentObj.instrument);
     });
     sectorObj.color = getRandomColor();
+    for (let i = 0; i < sectorObj.plArray.length; i++) {
+      let res = i === 0 ? i : i - 1;
+      sectorObj.dayChg.push(sectorObj.plArray[i] - sectorObj.plArray[res])
+    }
   });
-
-
   let len = copiedSectorGroupArray[0].graph.length;
   [stockRows] = await connection.query(
     `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${len};`
@@ -188,6 +198,9 @@ ON
   );
   for (let i = 0; i < copiedSectorGroupArray.length; i++) {
     generateChart(copiedSectorGroupArray[i], finalData);
+  }
+  for (let i = 0; i < copiedSectorGroupArray.length; i++) {
+    generateBarChart(copiedSectorGroupArray[i]);
   }
   doughnutChart(copiedSectorGroupArray);
   compareChart(copiedSectorGroupArray);
@@ -278,6 +291,13 @@ function getRandomColor() {
   }
   return color;
 }
+function colors(value, opacity) {
+  return value.map((day_chg) =>
+    day_chg < 0
+      ? `rgba(255, 110, 100, ${opacity})`
+      : `rgba(0, 125, 10, ${opacity})`
+  );
+}
 
 function generateChart(value, stockRows) {
   const data = {
@@ -318,5 +338,40 @@ function generateChart(value, stockRows) {
   new Chart(ctx, config);
   const container = document.getElementById("container");
   container.appendChild(canvas);
+}
+
+function generateBarChart(value) {
+  const data = {
+    labels: value.dates,
+    datasets: [
+      {
+        label: `${value.sector} (${value.instrumentNames.join(", ")})`,
+        data: value.dayChg,
+        borderColor: colors(value.dayChg, 1),
+        backgroundColor: colors(value.dayChg, 0.5),
+        borderWidth: 1,
+      }
+    ],
+  };
+  const config = {
+    type: "bar",
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+      },
+    },
+  };
+  const div = document.createElement("div");
+  div.className = "col-md-6";
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  new Chart(ctx, config);
+  const row = document.getElementById("row");
+  row.appendChild(div);
+  div.appendChild(canvas);
 }
 getData();
