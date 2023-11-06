@@ -304,7 +304,7 @@ function generateChart(value, stockRows) {
     labels: value.dates,
     datasets: [
       {
-        label: `${value.sector} (${value.instrumentNames.join(", ")})`,
+        label: `${value.sector} (${value.instrumentNames.join(", ")}){${value.changePercent[value.changePercent.length  - 1].toFixed(2)}%}`,
         data: value.changePercent,
         backgroundColor: value.color,
         borderColor: value.color,
@@ -341,11 +341,12 @@ function generateChart(value, stockRows) {
 }
 
 function generateBarChart(value) {
+  let label = (value.dayChg.filter(day_chg => day_chg > 0).length * 100 / value.dayChg.length).toFixed(2);
   const data = {
     labels: value.dates,
     datasets: [
       {
-        label: `${value.sector} (${value.instrumentNames.join(", ")})`,
+        label: `${value.sector} (${value.instrumentNames.join(", ")})(${label}%)`,
         data: value.dayChg,
         borderColor: colors(value.dayChg, 1),
         backgroundColor: colors(value.dayChg, 0.5),
