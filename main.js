@@ -73,11 +73,13 @@ async function createWindow() {
         row.daily_pl < 0 ? `rgba(255, 110, 100, ${opacity})` : `rgba(0, 125, 10, ${opacity})`
       );
     }
+    const totalProfitCounts = rows.filter((r) => r.daily_pl > 0).length;
+    const totalProfitPercent = ((totalProfitCounts * 100) / (rows.length)).toFixed(2);
     return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
-          label: "Daily PL",
+          label: `Daily PL (${totalProfitPercent}%)`,
           data: dailyChartData,
           borderColor: colors(1),
           backgroundColor: colors(.5),
@@ -165,22 +167,7 @@ async function createWindow() {
     totalPlTag.style.color = ${totalPl > 0 ? "'green'" : "'red'"};
     `);
 
-    // total profits and losses
-    const totalProfitCounts = rows.filter((r) => r.daily_pl > 0).length;
-    const totalProfitPercent = ((totalProfitCounts * 100) / (rows.length)).toFixed(2);
-    win.webContents
-      .executeJavaScript(`const totalProfits = document.getElementById("total-profits");
-    totalProfits.innerHTML = ${totalProfitCounts};
-    totalProfits.innerHTML = totalProfits.innerHTML + " "+"("+${totalProfitPercent}+"%)";        
-    totalProfits.style.color = "green";
-    `);
-    win.webContents
-      .executeJavaScript(`const totalLosses = document.getElementById("total-losses");
-  totalLosses.innerHTML = ${rows.filter((r) => r.daily_pl < 0).length};
-  totalLosses.innerHTML = totalLosses.innerHTML + " "+"("+${100 - totalProfitPercent}+"%)";        
-    
-  totalLosses.style.color = "red";
-  `);
+    // TODO quarterly result
 
     // get the highest value, lowest value & streak
     const highestValue = Math.max(...rows.map((row) => row.current_value));
