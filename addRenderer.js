@@ -82,6 +82,7 @@ editForm.addEventListener("submit", (event) => {
   document.getElementById("base-form").reset();
 });
 
+// create new instrument type
 const instrumentTypeForm = document.getElementById("add-instrument-type-form");
 instrumentTypeForm.addEventListener("submit", (event) => {
   event.preventDefault(); // Prevent the default form submission behavior
@@ -101,11 +102,35 @@ instrumentTypeForm.addEventListener("submit", (event) => {
   document.getElementById("add-instrument-type-form").reset();
 });
 
+// create new investment scheme
+const investmentSchemeForm = document.getElementById("add-investment-scheme-form");
+investmentSchemeForm.addEventListener("submit", (event) => {
+  event.preventDefault(); // Prevent the default form submission behavior
+
+  // Get form data
+  const investmentValue = document.getElementById("investment-scheme-name").value;
+  const investmentTypeValue = document.getElementById("investment-type-select-value").value;
+  // Save form data to MySQL database
+  const query = `INSERT INTO investment_scheme (name, investment_type_id) VALUES ('${investmentValue}', '${investmentTypeValue}')`;
+  connection.query(query, (err, result) => {
+    if (err) {
+      console.log(err);
+      throw err;
+    }
+  });
+
+  // Reset form
+  document.getElementById("add-investment-scheme-form").reset();
+});
+
 // load dropdown with sector values
 const selectBox = document.getElementById("sector-value");
+const investmentTypeSelectBox = document.getElementById("investment-type-select-value");
 const editSelectBox = document.getElementById("edit-sector-value");
 const editInstrumentBox = document.getElementById("edit-instrument-value");
 const query = "SELECT id, name FROM sector";
+const investmentTypeQuery = "SELECT id, name FROM investment_types";
+
 connection.query(query, (err, rows) => {
   if (err) throw err;
 
@@ -140,5 +165,19 @@ connection.query(query, (err, rows) => {
     editSelectBox.value = temp.sector_id;
   });
 
+
+});
+
+connection.query(investmentTypeQuery, (err, rows) => {
+  if (err) throw err;
+
+  // Populate the select box options
+  rows.forEach((row) => {
+    const option = document.createElement("option");
+    option.value = row.id;
+    option.text = row.name;
+    investmentTypeSelectBox.appendChild(option.cloneNode(true));
+    editSelectBox.appendChild(option);
+  });
 
 });

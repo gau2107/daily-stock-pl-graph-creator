@@ -31,7 +31,6 @@
       <button type="submit" class="btn btn-dark">Submit</button>
     </form>
 
-
     <h1>Edit instrument</h1>
     <form id="edit-instrument-form" class="mb-3 col-md-3">
       <div class="mb-3">
@@ -64,6 +63,23 @@
 
       <button type="submit" class="btn btn-dark">Submit</button>
     </form>
+
+    <h1>Add investment scheme</h1>
+    <form id="add-investment-scheme-form" class="mb-3 col-md-3">
+      <div class="mb-3">
+        <label for="investment-scheme-name" class="form-label">Investment scheme</label>
+        <input type="text" class="form-control" id="investment-scheme-name" required />
+      </div>
+
+      <div class="mb-3">
+        <label for="investment-type-select-value" class="form-label">Investment Type</label>
+        <select id="investment-type-select-value" class="form-control" required>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-dark">Submit</button>
+    </form>
+
   </div>
   <script src="addRenderer.js"></script>
 
