@@ -82,6 +82,25 @@ editForm.addEventListener("submit", (event) => {
   document.getElementById("base-form").reset();
 });
 
+const instrumentTypeForm = document.getElementById("add-instrument-type-form");
+instrumentTypeForm.addEventListener("submit", (event) => {
+  event.preventDefault(); // Prevent the default form submission behavior
+
+  // Get form data
+  const instrumentValue = document.getElementById("add-instrument-type").value;
+  // Save form data to MySQL database
+  const query = `INSERT INTO investment_types (name) VALUES ('${instrumentValue}')`;
+  connection.query(query, (err, result) => {
+    if (err) {
+      console.log(err);
+      throw err;
+    }
+  });
+
+  // Reset form
+  document.getElementById("add-instrument-type-form").reset();
+});
+
 // load dropdown with sector values
 const selectBox = document.getElementById("sector-value");
 const editSelectBox = document.getElementById("edit-sector-value");

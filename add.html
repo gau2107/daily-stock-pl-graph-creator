@@ -9,7 +9,7 @@
     <h1>Add investment value</h1>
     <form id="base-form" class="mb-3 col-md-3">
       <div class="mb-3">
-        <label for="base-value" class="form-label">Investment value</label>
+        <label for="investment-value" class="form-label">Investment value</label>
         <input type="number" class="form-control" id="investment-value" required step="0.01" />
       </div>
       <button type="submit" class="btn btn-dark">Submit</button>
@@ -50,6 +50,16 @@
       <div class="mb-3">
         <label for="edit-checkbox" class="form-check-label">Is Active</label>
         <input type="checkbox" id="edit-checkbox" class="form-check-input" />
+      </div>
+
+      <button type="submit" class="btn btn-dark">Submit</button>
+    </form>
+
+    <h1>Add investment type</h1>
+    <form id="add-instrument-type-form" class="mb-3 col-md-3">
+      <div class="mb-3">
+        <label for="add-instrument-type" class="form-label">Type</label>
+        <input type="text" id="add-instrument-type" class="form-control" />
       </div>
 
       <button type="submit" class="btn btn-dark">Submit</button>
