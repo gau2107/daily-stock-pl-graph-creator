@@ -49,7 +49,7 @@ async function createWindow() {
 
   function getCurrentDataForChart(rows) {
     let bgColors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, .5)" : "rgba(39, 174, 96, .5)");
-    let colors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(39, 174, 96, 1)");;
+    let colors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(39, 174, 96, 1)");
     let data = rows.map((row) => row.current_value);
     return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
@@ -428,7 +428,7 @@ async function createWindow() {
         newWindow.loadFile("consolidate.html");
         newWindow.setMenu(null);
         newWindow.maximize();
-        // newWindow.webContents.openDevTools();
+        newWindow.webContents.openDevTools();
       },
     },
     {
