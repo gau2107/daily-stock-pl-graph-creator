@@ -11,9 +11,9 @@
 </head>
 
 <body style="background-color: whitesmoke;">
-  <div class="container" id="container" >
+  <div class="container">
     <h1>Consolidated portfolio tracker</h1>
-    <div class="row">
+    <div class="row mb-5">
       <div class="col-md-3">
         <form id="form" class="mb-3">
           <div class="mb-3">
@@ -38,18 +38,22 @@
         </form>
       </div>
       <div class="col-md-2">
-        <canvas id="pie-chart"></canvas>
+        <canvas id="current-pie-chart"></canvas>
       </div>
-      
+
       <div class="col-md-2">
-        <canvas id="pie-chart1"></canvas>
+        <canvas id="invested-pie-chart"></canvas>
       </div>
       <div class="col-md-5 p-4">
         <canvas id="chart"></canvas>
       </div>
     </div>
-    <script src="consolidatedRenderer.js"></script>
+
+    <div>
+      <div class="row" id="row"></div>
+    </div>
   </div>
+  <script src="consolidatedRenderer.js"></script>
 </body>
 
 </html>

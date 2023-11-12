@@ -50,11 +50,16 @@ async function getData() {
 
   generateChart(rows);
   generatePieChart(rows);
+  let schemeArray = groupedByScheme(rows);
+  for (let i = 0; i < 5; i++) {
+    getIndividualChart(schemeArray[i]);
+  }
+  // getIndividualChart(schemeArray[0]);
+  // getIndividualChart(schemeArray[4]);
 }
 
 function generateChart(rows) {
   rows = groupedByMonth(rows);
-
   let labels = rows.map(r => r.month);
   let values = rows.map(r => (r.totalProfitValue * 100) / r.totalInvestedValue);
   const data = {
@@ -84,14 +89,44 @@ function generateChart(rows) {
   const chartCanvas = document.getElementById("chart");
   new Chart(chartCanvas, config);
 }
-function getRandomColor() {
-  const letters = "0123456789ABCDEF";
-  let color = "#";
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
+
+function getIndividualChart(obj) {
+  let labels = obj.data.map(r => r.date);
+  let values = obj.data.map(r => (r.p_l*100) / r.invested_value);
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        label: `${obj.title}`,
+        data: values,
+        hoverOffset: 5,
+      }
+    ],
+  };
+  const config = {
+    type: "bar",
+    data: data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top",
+        },
+      },
+    },
+  };
+
+  const div = document.createElement("div");
+  div.className = "col-md-4";
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  new Chart(ctx, config);
+  const container = document.getElementById("row");
+  container.appendChild(div);
+  div.appendChild(canvas);
 }
+
 function generatePieChart(rows) {
   // TODO make 5 dynamic
   const elements = rows.slice(-5);
@@ -154,9 +189,9 @@ function generatePieChart(rows) {
       },
     },
   };
-  const chartCanvas = document.getElementById("pie-chart");
+  const chartCanvas = document.getElementById("current-pie-chart");
   new Chart(chartCanvas, config);
-  const chartCanvas1 = document.getElementById("pie-chart1");
+  const chartCanvas1 = document.getElementById("invested-pie-chart");
   new Chart(chartCanvas1, config1);
 }
 
@@ -179,7 +214,19 @@ const groupedByMonth = (data) => {
 
 }
 
+const groupedByScheme = (data) => {
+  let groupedByScheme = data.reduce((result, item) => {
+    if (!result[item.investment_scheme]) {
+      result[item.investment_scheme] = [];
+    }
+    result[item.investment_scheme].push(item);
+    return result;
+  }, {});
+  return Object.entries(groupedByScheme).map(([title, data]) => {
+    return { title, data };
+  });
 
+}
 
 const form = document.getElementById("form");
 form.addEventListener("submit", async (event) => {
@@ -206,6 +253,5 @@ form.addEventListener("submit", async (event) => {
   // Reset form
   document.getElementById("form").reset();
 });
-
 
 getData();
