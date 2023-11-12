@@ -428,7 +428,7 @@ async function createWindow() {
         newWindow.loadFile("consolidate.html");
         newWindow.setMenu(null);
         newWindow.maximize();
-        newWindow.webContents.openDevTools();
+        // newWindow.webContents.openDevTools();
       },
     },
     {

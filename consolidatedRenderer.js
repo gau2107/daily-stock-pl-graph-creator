@@ -101,13 +101,41 @@ function generatePieChart(rows) {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          position: "top",
+          position: "bottom",
+        },
+      },
+    },
+  };
+  let labels1 = elements.map(r => r.investment_scheme);
+  let values1 = elements.map(r => r.invested_value);
+  const data1 = {
+    labels: labels1,
+    datasets: [
+      {
+        label: 'Current Value',
+        data: values1,
+        hoverOffset: 5,
+      }
+    ],
+  };
+  const config1 = {
+    type: "pie",
+    data: data1,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom",
         },
       },
     },
   };
   const chartCanvas = document.getElementById("pie-chart");
   new Chart(chartCanvas, config);
+  const chartCanvas1 = document.getElementById("pie-chart1");
+  new Chart(chartCanvas1, config1);
 }
 
 const groupedByMonth = (data) => {
