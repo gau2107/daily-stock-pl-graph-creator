@@ -8,6 +8,21 @@ const envFilePath =
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
+let months = new Map();
+months.set('01', 'January');
+months.set('02', 'February');
+months.set('03', 'March');
+months.set('04', 'April');
+months.set('05', 'May');
+months.set('06', 'June');
+months.set('07', 'July');
+months.set('08', 'August');
+months.set('09', 'September');
+months.set('10', 'October');
+months.set('11', 'November');
+months.set('12', 'December');
+
+
 // Replace the connection details with your own
 let connection;
 async function getData() {
@@ -79,7 +94,7 @@ function getRandomColor() {
 }
 function generatePieChart(rows) {
   // TODO make 5 dynamic
-  const elements = rows.slice(0, 5);
+  const elements = rows.slice(-5);
 
   let labels = elements.map(r => r.investment_scheme);
   let values = elements.map(r => r.current_value);
@@ -100,6 +115,10 @@ function generatePieChart(rows) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
+        title: {
+          display: true,
+          text: 'Current Value'
+        },
         legend: {
           position: "bottom",
         },
@@ -125,8 +144,11 @@ function generatePieChart(rows) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
+        title: {
           display: true,
+          text: 'Invested Value'
+        },
+        legend: {
           position: "bottom",
         },
       },
@@ -151,6 +173,7 @@ const groupedByMonth = (data) => {
     const totalInvestedValue = data.reduce((sum, item) => sum + item.invested_value, 0);
     const totalCurrentValue = data.reduce((sum, item) => sum + item.current_value, 0);
     const totalProfitValue = data.reduce((sum, item) => sum + item.p_l, 0);
+    month = months.get(month);
     return { month, data, totalInvestedValue, totalCurrentValue, totalProfitValue };
   });
 
