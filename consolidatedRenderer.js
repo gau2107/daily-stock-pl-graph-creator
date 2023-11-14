@@ -92,7 +92,7 @@ function generateChart(rows) {
 
 function getIndividualChart(obj) {
   let labels = obj.data.map(r => r.date);
-  let values = obj.data.map(r => (r.p_l*100) / r.invested_value);
+  let values = obj.data.map(r => (r.p_l * 100) / r.invested_value);
   const data = {
     labels: labels,
     datasets: [
@@ -196,23 +196,27 @@ function generatePieChart(rows) {
 }
 
 const groupedByMonth = (data) => {
-  let groupedByMonth = data.reduce((result, item) => {
+  const groupedByMonthMap = data.reduce((result, item) => {
     const month = item.date.split('-')[1]; // Extracting month from date
-    if (!result[month]) {
-      result[month] = [];
+
+    if (!result.has(month)) {
+      result.set(month, []);
     }
-    result[month].push(item);
+
+    result.get(month).push(item);
     return result;
-  }, {});
-  return Object.entries(groupedByMonth).map(([month, data]) => {
+  }, new Map());
+
+  return Array.from(groupedByMonthMap).map(([month, data]) => {
     const totalInvestedValue = data.reduce((sum, item) => sum + item.invested_value, 0);
     const totalCurrentValue = data.reduce((sum, item) => sum + item.current_value, 0);
     const totalProfitValue = data.reduce((sum, item) => sum + item.p_l, 0);
-    month = months.get(month);
+
+    month = months.get(month); // Assuming you have a Map named 'months' for month name lookup
+
     return { month, data, totalInvestedValue, totalCurrentValue, totalProfitValue };
   });
-
-}
+};
 
 const groupedByScheme = (data) => {
   let groupedByScheme = data.reduce((result, item) => {
