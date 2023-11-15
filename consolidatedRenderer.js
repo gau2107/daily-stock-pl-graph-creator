@@ -54,8 +54,6 @@ async function getData() {
   for (let i = 0; i < 5; i++) {
     getIndividualChart(schemeArray[i]);
   }
-  // getIndividualChart(schemeArray[0]);
-  // getIndividualChart(schemeArray[4]);
 }
 
 function generateChart(rows) {
@@ -132,20 +130,20 @@ function generatePieChart(rows) {
   const elements = rows.slice(-5);
 
   let labels = elements.map(r => r.investment_scheme);
-  let values = elements.map(r => r.current_value);
-  const data = {
+  let currentValues = elements.map(r => r.current_value);
+  const currentChartData = {
     labels: labels,
     datasets: [
       {
         label: 'Current Value',
-        data: values,
+        data: currentValues,
         hoverOffset: 5,
       }
     ],
   };
-  const config = {
+  const curChartConfig = {
     type: "pie",
-    data: data,
+    data: currentChartData,
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -160,21 +158,20 @@ function generatePieChart(rows) {
       },
     },
   };
-  let labels1 = elements.map(r => r.investment_scheme);
-  let values1 = elements.map(r => r.invested_value);
-  const data1 = {
-    labels: labels1,
+  let investedValues = elements.map(r => r.invested_value);
+  const investedChartData = {
+    labels: labels,
     datasets: [
       {
         label: 'Current Value',
-        data: values1,
+        data: investedValues,
         hoverOffset: 5,
       }
     ],
   };
-  const config1 = {
+  const invChartConfig = {
     type: "pie",
-    data: data1,
+    data: investedChartData,
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -190,9 +187,9 @@ function generatePieChart(rows) {
     },
   };
   const chartCanvas = document.getElementById("current-pie-chart");
-  new Chart(chartCanvas, config);
+  new Chart(chartCanvas, curChartConfig);
   const chartCanvas1 = document.getElementById("invested-pie-chart");
-  new Chart(chartCanvas1, config1);
+  new Chart(chartCanvas1, invChartConfig);
 }
 
 const groupedByMonth = (data) => {
