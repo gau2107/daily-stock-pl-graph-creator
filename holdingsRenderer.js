@@ -1,6 +1,8 @@
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const path = require("path");
+const dayjs = require("dayjs");
+
 const { ipcRenderer } = require("electron");
 
 const envFilePath =
@@ -47,8 +49,9 @@ async function getData() {
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
     FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id WHERE i.is_active = true;`
   );
-  allHoldingsChart(allRows, rows);
+  allHoldingsChart(allRows, rows, true);
 }
+
 function displayData(parentData, instruments) {
   const itemsPerPage = 10; // Number of items to display per page
   const dataBody = document.getElementById('dataBody');
@@ -270,7 +273,7 @@ function plValueChart(rows) {
   new Chart(chartCanvas, config);
 }
 
-function allHoldingsChart(rows, instruments) {
+function allHoldingsChart(rows, instruments, isRunningFirstTime) {
   const groupedData = rows.reduce((acc, obj) => {
     const date = new Date(obj.date).getTime();
     const existingGroup = acc.find(
@@ -285,7 +288,7 @@ function allHoldingsChart(rows, instruments) {
   }, []);
 
   const labels = groupedData.map((data) => new Date(data.date).toDateString());
-  displayData(groupedData, instruments);
+  if (isRunningFirstTime) displayData(groupedData, instruments);
 
   function getPercent(found) {
     if (found) return (100 * found.p_l) / (found.avg_cost * found.qty);
@@ -339,4 +342,44 @@ function allHoldingsChart(rows, instruments) {
     };
   }
 }
+
+const filterBtn = document.getElementById("filter");
+filterBtn.addEventListener("click", async () => {
+  let chartId = document.getElementById('total-chart');
+  var context = chartId.getContext('2d');
+  Chart.helpers.each(Chart.instances, function (instance) {
+    if (instance.ctx === context) {
+      // Destroy the chart instance
+      instance.destroy();
+      return;
+    }
+  });
+
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
+  const connection = await mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: dbConnectionString,
+  });
+
+  let [rows] = await connection.query(
+    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
+      i.name AS instrument, i.sector_id FROM holdings AS h INNER JOIN instrument AS i ON
+      h.instrument_id = i.id WHERE i.is_active = true ORDER BY id DESC LIMIT ${totalInstruments};`
+  );
+
+  let [allRows] = await connection.query(
+    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
+    FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id WHERE i.is_active = true;`
+  );
+  const temp = allRows.filter((temp) => {
+    return (
+      dayjs(temp.date).isAfter(dayjs(startDate).subtract(1, "day")) &&
+      dayjs(temp.date).isBefore(dayjs(endDate).add(1, "day"))
+    );
+  });
+  allHoldingsChart(temp, rows)
+});
 getData();

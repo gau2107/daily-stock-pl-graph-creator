@@ -35,11 +35,21 @@
         </thead>
         <tbody id="dataBody"></tbody>
       </table>
-     </div>
-     <nav class="mb-5">
+    </div>
+    <nav class="mb-4">
       <ul class="pagination justify-content-center" id="pagination"></ul>
     </nav>
-  
+
+    <div class="row mb-2">
+    <div class="col-md-6">
+      <h2>Comparison graph</h2>
+    </div>
+    <div class="col-md-6 d-flex justify-content-end">
+      <input type="date" class="form-control mr-10" id="start-date" required />
+      <input type="date" class="form-control mr-10" id="end-date" required />
+      <button type="button" class="btn btn-dark rounded mr-10" id="filter">Filter</button>
+    </div>
+  </div>
     <canvas id="total-chart"></canvas>
   </div>
 
