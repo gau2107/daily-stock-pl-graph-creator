@@ -1,6 +1,7 @@
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const path = require("path");
+const dayjs = require("dayjs");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
@@ -47,7 +48,7 @@ async function generateDataForChart(rows) {
       values[find].day_chg.push(parseFloat(rows[i].day_chg));
       values[find].data.push(
         parseFloat(values[find].data[values[find].data.length - 1]) +
-          parseFloat(rows[i].day_chg)
+        parseFloat(rows[i].day_chg)
       );
     } else {
       values.push({
@@ -130,4 +131,37 @@ function generateChart(dates, value, stockRows) {
   const container = document.getElementById("container");
   container.appendChild(canvas);
 }
+
+const filterBtn = document.getElementById("filter");
+filterBtn.addEventListener("click", async () => {
+  Chart.helpers.each(Chart.instances, function (instance) {
+    instance.destroy();
+  });
+  var parentElement = document.getElementById('container'); // Replace with the actual ID of your parent element
+  while (parentElement.firstChild) {
+    parentElement.removeChild(parentElement.firstChild);
+  }
+
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
+  connection = await mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: dbConnectionString,
+  });
+
+  [rows] =
+    await connection.query(`SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
+  FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id where i.is_active = true;;`);
+
+  const temp = rows.filter((temp) => {
+    return (
+      dayjs(temp.date).isAfter(dayjs(startDate).subtract(1, "day")) &&
+      dayjs(temp.date).isBefore(dayjs(endDate).add(1, "day"))
+    );
+  });
+  generateDataForChart(temp);
+
+});
 getData();

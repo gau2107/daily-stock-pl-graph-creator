@@ -3,11 +3,24 @@
 <head>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="./index.css" />
+
 </head>
 
 <body>
-  <div id="container" class="container">
-    <h1>Individual stock detail</h1>
+  <div class="container">
+
+    <div class="row mb-2 mt-2">
+      <div class="col-md-4">
+        <h2>Individual stock detail</h2>
+      </div>
+      <div class="col-md-8 d-flex justify-content-end">
+        <input type="date" class="form-control mr-10" id="start-date" required />
+        <input type="date" class="form-control mr-10" id="end-date" required />
+        <button type="button" class="btn btn-dark rounded mr-10" id="filter">Filter</button>
+      </div>
+    </div>
+    <div id="container"></div>
   </div>
   <script src="individualStockRenderer.js"></script>
 </body>
