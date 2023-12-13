@@ -37,80 +37,80 @@ ON
     i.id = h.instrument_id where i.is_active = true;`);
 
   let sectorGroupArray = [];
-  rows.forEach((product) => {
+  rows.forEach((rowData) => {
     // find by sector
-    let x = sectorGroupArray.findIndex((p) => p.sector === product.sector_name);
-    if (x >= 0) {
+    let sectorObj = sectorGroupArray.findIndex((p) => p.sector === rowData.sector_name);
+    if (sectorObj >= 0) {
       //true
       // find by instrument
-      let y = sectorGroupArray[x].instruments.findIndex(
-        (p) => p.instrument === product.instrument_name
+      let instrumentObj = sectorGroupArray[sectorObj].instruments.findIndex(
+        (p) => p.instrument === rowData.instrument_name
       );
-      if (y >= 0) {
+      if (instrumentObj >= 0) {
         //true
-        sectorGroupArray[x].instruments[y].data.push({
-          cur_val: product.cur_val,
-          p_l: product.p_l,
-          date: product.date,
-          net_chg: product.net_chg,
-          day_chg: product.day_chg,
+        sectorGroupArray[sectorObj].instruments[instrumentObj].data.push({
+          cur_val: rowData.cur_val,
+          p_l: rowData.p_l,
+          date: rowData.date,
+          net_chg: rowData.net_chg,
+          day_chg: rowData.day_chg,
         });
       } else {
         //new instrument
-        sectorGroupArray[x].instruments.push({
-          instrument: product.instrument_name,
+        sectorGroupArray[sectorObj].instruments.push({
+          instrument: rowData.instrument_name,
           data: [
             {
-              cur_val: product.cur_val,
-              p_l: product.p_l,
-              date: product.date,
-              net_chg: product.net_chg,
-              day_chg: product.day_chg,
+              cur_val: rowData.cur_val,
+              p_l: rowData.p_l,
+              date: rowData.date,
+              net_chg: rowData.net_chg,
+              day_chg: rowData.day_chg,
             },
           ],
         });
       }
-      sectorGroupArray[x].net_percent = sectorGroupArray[x].instruments.reduce(
+      sectorGroupArray[sectorObj].net_percent = sectorGroupArray[sectorObj].instruments.reduce(
         (acc, instrument) =>
           parseFloat(instrument.data[instrument.data.length - 1].net_chg) + acc,
         0
       );
-      sectorGroupArray[x].p_l = sectorGroupArray[x].instruments.reduce(
+      sectorGroupArray[sectorObj].p_l = sectorGroupArray[sectorObj].instruments.reduce(
         (acc, instrument) =>
           parseFloat(instrument.data[instrument.data.length - 1].p_l) + acc,
         0
       );
-      sectorGroupArray[x].cur_val = sectorGroupArray[x].instruments.reduce(
+      sectorGroupArray[sectorObj].cur_val = sectorGroupArray[sectorObj].instruments.reduce(
         (acc, instrument) =>
           parseFloat(instrument.data[instrument.data.length - 1].cur_val) + acc,
         0
       );
 
-      sectorGroupArray[x].net_percent =
-        sectorGroupArray[x].net_percent.toFixed(2);
-      sectorGroupArray[x].p_l = sectorGroupArray[x].p_l.toFixed(2);
-      sectorGroupArray[x].cur_val = sectorGroupArray[x].cur_val.toFixed(2);
+      sectorGroupArray[sectorObj].net_percent =
+        sectorGroupArray[sectorObj].net_percent.toFixed(2);
+      sectorGroupArray[sectorObj].p_l = sectorGroupArray[sectorObj].p_l.toFixed(2);
+      sectorGroupArray[sectorObj].cur_val = sectorGroupArray[sectorObj].cur_val.toFixed(2);
     } else {
       // new sector
       sectorGroupArray.push({
-        sector: product.sector_name,
+        sector: rowData.sector_name,
         instruments: [
           {
-            instrument: product.instrument_name,
+            instrument: rowData.instrument_name,
             data: [
               {
-                cur_val: product.cur_val,
-                p_l: product.p_l,
-                date: product.date,
-                net_chg: product.net_chg,
-                day_chg: product.day_chg,
+                cur_val: rowData.cur_val,
+                p_l: rowData.p_l,
+                date: rowData.date,
+                net_chg: rowData.net_chg,
+                day_chg: rowData.day_chg,
               },
             ],
           },
         ],
-        net_percent: product.net_chg,
-        p_l: product.p_l,
-        cur_val: product.cur_val,
+        net_percent: rowData.net_chg,
+        p_l: rowData.p_l,
+        cur_val: rowData.cur_val,
       });
     }
   });
@@ -304,7 +304,7 @@ function generateChart(value, stockRows) {
     labels: value.dates,
     datasets: [
       {
-        label: `${value.sector} (${value.instrumentNames.join(", ")})(${value.changePercent[value.changePercent.length  - 1].toFixed(2)}%)`,
+        label: `${value.sector} (${value.instrumentNames.join(", ")})(${value.changePercent[value.changePercent.length - 1].toFixed(2)}%)`,
         data: value.changePercent,
         backgroundColor: value.color,
         borderColor: value.color,

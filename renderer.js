@@ -60,11 +60,12 @@ allBtnEvent.addEventListener("click", () => {
 
 const filterBtn = document.getElementById("filter");
 filterBtn.addEventListener("click", () => {
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
+  if (!startDate || !endDate) return;
   Chart.helpers.each(Chart.instances, (chart) => {
     chart.destroy();
   });
-  const startDate = document.getElementById("start-date").value;
-  const endDate = document.getElementById("end-date").value;
   ipcRenderer.send("filterData", { startDate, endDate });
 });
 

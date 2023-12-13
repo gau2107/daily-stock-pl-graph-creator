@@ -345,18 +345,18 @@ function allHoldingsChart(rows, instruments, isRunningFirstTime) {
 
 const filterBtn = document.getElementById("filter");
 filterBtn.addEventListener("click", async () => {
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
+  if (!startDate || !endDate) return;
   let chartId = document.getElementById('total-chart');
   var context = chartId.getContext('2d');
   Chart.helpers.each(Chart.instances, function (instance) {
     if (instance.ctx === context) {
-      // Destroy the chart instance
       instance.destroy();
       return;
     }
   });
 
-  const startDate = document.getElementById("start-date").value;
-  const endDate = document.getElementById("end-date").value;
   const connection = await mysql.createConnection({
     host: "localhost",
     user: "root",

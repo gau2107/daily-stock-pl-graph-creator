@@ -165,6 +165,8 @@
     </div>
     <script src="renderer.js"></script>
     <script>
+      let curPageNo = 1;
+
       // Function to display data in the HTML table with pagination
       function displayData(parentData) {
         const itemsPerPage = 10; // Number of items to display per page
@@ -178,6 +180,7 @@
 
         // Function to display a specific page
         function displayPage(pageNumber) {
+          curPageNo = pageNumber;
           let data = JSON.parse(JSON.stringify(parentData))
 
           dataBody.innerHTML = ''; // Clear the table body
@@ -190,7 +193,7 @@
           // Loop through the items of the current page and populate the table
           for (let i = startIndex; i < endIndex && i < data.length; i++) {
             const row = document.createElement('tr');
-            
+
             let niftyPercent = parseFloat((data[i]?.nifty_50 - data[i + 1]?.nifty_50 || 0) * 100 / data[i + 1]?.nifty_50 || 1);
             let dailyPercent = (data[i]?.current_value - data[i + 1]?.current_value || 0) * 100 / data[i + 1]?.current_value || 1;
 
@@ -214,7 +217,10 @@
                 }
 
 
-                cell.textContent = data[i][key];
+                if (key === 'total_pl' || key === 'daily_pl')
+                  cell.textContent = `₹${data[i][key].toLocaleString("en-IN")}`;
+                else
+                  cell.textContent = data[i][key];
                 row.appendChild(cell);
 
                 if (key === 'daily_pl') {
@@ -222,12 +228,11 @@
                   innerDiv.className = "contribution-box " + getClass(parseFloat(data[i][key]));
                   contributionDiv.appendChild(innerDiv);
                 }
-
               }
-
             }
 
             dataBody.appendChild(row);
+            createPaginationLinks();
           }
         }
 
@@ -252,7 +257,7 @@
           for (let i = 1; i <= totalPages; i++) {
             const link = document.createElement('li');
             link.classList.add('page-item');
-            link.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+            link.innerHTML = `<a class="page-link ${curPageNo == i ? 'active' : ''}" href="#">${i}</a>`;
             link.addEventListener('click', (event) => {
               // Prevent the default behavior of the click event
               event.preventDefault();
@@ -263,7 +268,7 @@
         }
 
         // Display the first page initially
-        displayPage(1);
+        displayPage(curPageNo);
 
         // Create the pagination links
         createPaginationLinks();

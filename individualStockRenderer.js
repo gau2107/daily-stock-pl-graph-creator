@@ -72,8 +72,10 @@ async function generateDataForChart(rows) {
 }
 
 function generateChart(dates, value, stockRows) {
-  if (value.data.length < dates.length)
+  if (value.data.length < dates.length) {
     dates = dates.slice(dates.length - value.data.length);
+    stockRows = stockRows.slice(stockRows.length - value.data.length);
+  }
   function colors(opacity) {
     return value.day_chg.map((day_chg) =>
       day_chg < 0
@@ -134,6 +136,9 @@ function generateChart(dates, value, stockRows) {
 
 const filterBtn = document.getElementById("filter");
 filterBtn.addEventListener("click", async () => {
+  const startDate = document.getElementById("start-date").value;
+  const endDate = document.getElementById("end-date").value;
+  if (!startDate || !endDate) return;
   Chart.helpers.each(Chart.instances, function (instance) {
     instance.destroy();
   });
@@ -142,8 +147,6 @@ filterBtn.addEventListener("click", async () => {
     parentElement.removeChild(parentElement.firstChild);
   }
 
-  const startDate = document.getElementById("start-date").value;
-  const endDate = document.getElementById("end-date").value;
   connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
