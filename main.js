@@ -216,6 +216,7 @@ async function createWindow() {
     win.webContents
       .executeJavaScript(`const lastWeekChange = document.getElementById("last-week-change");
      lastWeekChange.innerHTML = ${plDifference.toFixed(2)};
+     lastWeekChange.innerHTML = lastWeekChange.innerHTML + " "+"("+${((plDifference * 100) / lastWeekPl).toFixed(2)}+"%)";
      lastWeekChange.style.color = "${plDifference > 0 ? "green" : "red"}";
      `);
 

@@ -91,8 +91,9 @@ function displayData(parentData, instruments) {
       for (let j = 0; j < instruments.length; j++) {
         const content = data[i]['data'].find((d) => d.instrument === instruments[j].instrument);
         const cell = document.createElement('td');
-        cell.textContent = content?.day_chg ? parseFloat(content?.day_chg)?.toFixed(2) : '-';
+        cell.textContent = content?.day_chg ? parseFloat(content?.day_chg)?.toFixed(2) + '%' : '-';
         cell.style.color = content?.day_chg > 0 ? 'green' : 'red';
+        cell.style.backgroundColor = content?.day_chg > 1 ? 'rgba(0, 255, 0, .08)' : content?.day_chg > 0 ? 'rgba(0, 255, 0, .03)' :  content?.day_chg < -1 ? 'rgba(255, 0, 0, 0.08)' : 'rgba(255, 0, 0, .03)';
         row.appendChild(cell);
       }
 

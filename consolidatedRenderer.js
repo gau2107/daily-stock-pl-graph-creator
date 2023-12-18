@@ -131,6 +131,7 @@ function generatePieChart(rows) {
 
   let labels = elements.map(r => r.investment_scheme);
   let currentValues = elements.map(r => r.current_value);
+  let totalCurrentValue = currentValues.reduce((sum, item) => sum + item, 0); 
   const currentChartData = {
     labels: labels,
     datasets: [
@@ -150,7 +151,7 @@ function generatePieChart(rows) {
       plugins: {
         title: {
           display: true,
-          text: 'Current Value'
+          text: `Current Value ₹${totalCurrentValue.toLocaleString("en-IN")}`
         },
         legend: {
           position: "bottom",
@@ -159,11 +160,12 @@ function generatePieChart(rows) {
     },
   };
   let investedValues = elements.map(r => r.invested_value);
+  let totalInvestedValue = investedValues.reduce((a, b) => a + b, 0);
   const investedChartData = {
     labels: labels,
     datasets: [
       {
-        label: 'Current Value',
+        label: `Current Value`,
         data: investedValues,
         hoverOffset: 5,
       }
@@ -178,7 +180,7 @@ function generatePieChart(rows) {
       plugins: {
         title: {
           display: true,
-          text: 'Invested Value'
+          text: `Invested Value ₹${totalInvestedValue.toLocaleString("en-IN")}`
         },
         legend: {
           position: "bottom",
