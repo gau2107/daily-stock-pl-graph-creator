@@ -59,7 +59,7 @@ async function getData() {
 function generateChart(rows) {
   rows = groupedByMonth(rows);
   let labels = rows.map(r => r.month);
-  let values = rows.map(r => (r.totalProfitValue * 100) / r.totalInvestedValue);
+  let values = rows.map(r => ((r.totalProfitValue * 100) / r.totalInvestedValue).toFixed(2));
   const data = {
     labels: labels,
     datasets: [
@@ -90,12 +90,12 @@ function generateChart(rows) {
 
 function getIndividualChart(obj) {
   let labels = obj.data.map(r => r.date);
-  let values = obj.data.map(r => (r.p_l * 100) / r.invested_value);
+  let values = obj.data.map(r => ((r.p_l * 100) / r.invested_value).toFixed(2));
   const data = {
     labels: labels,
     datasets: [
       {
-        label: `${obj.title}`,
+        label: `${obj.title} %`,
         data: values,
         hoverOffset: 5,
       }
