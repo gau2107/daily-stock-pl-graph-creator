@@ -293,7 +293,7 @@ function allHoldingsChart(rows, instruments, isRunningFirstTime) {
 
   function getPercent(found) {
     if (found) return (100 * found.p_l) / (found.avg_cost * found.qty);
-    else return 0;
+    else return undefined;
   }
   function generateDataSets(type, label, hidden) {
     let color = getRandomColor();
