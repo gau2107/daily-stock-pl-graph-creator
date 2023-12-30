@@ -93,7 +93,7 @@ function displayData(parentData, instruments) {
         const cell = document.createElement('td');
         cell.textContent = content?.day_chg ? parseFloat(content?.day_chg)?.toFixed(2) + '%' : '-';
         cell.style.color = content?.day_chg > 0 ? 'green' : 'red';
-        cell.style.backgroundColor = content?.day_chg > 1 ? 'rgba(0, 255, 0, .08)' : content?.day_chg > 0 ? 'rgba(0, 255, 0, .03)' :  content?.day_chg < -1 ? 'rgba(255, 0, 0, 0.08)' : 'rgba(255, 0, 0, .03)';
+        cell.style.backgroundColor = content?.day_chg > 1 ? 'rgba(0, 255, 0, .08)' : content?.day_chg > 0 ? 'rgba(0, 255, 0, .03)' : content?.day_chg < -1 ? 'rgba(255, 0, 0, 0.08)' : 'rgba(255, 0, 0, .03)';
         row.appendChild(cell);
       }
 
@@ -382,5 +382,52 @@ filterBtn.addEventListener("click", async () => {
     );
   });
   allHoldingsChart(temp, rows)
+});
+
+const graphFilterBtn = document.getElementById("filter-date");
+graphFilterBtn.addEventListener("change", async () => {
+  const filterDate = document.getElementById("filter-date").value;
+  var date = new Date(filterDate);
+  var dayOfWeek = date.getDay();
+
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    alert('Weekends are not allowed. Please select a weekday.');
+    document.getElementById('filter-date').value = '';
+    return;
+  }
+  let chartId = document.getElementById('compare-chart');
+  var context = chartId.getContext('2d');
+  let chartIdDoughnut = document.getElementById('doughnut-chart');
+  var contextDoughnut = chartIdDoughnut.getContext('2d');
+  let chartIdPl = document.getElementById('pl-chart');
+  var contextPl = chartIdPl.getContext('2d');
+  let chartIdPlValue = document.getElementById('pl-value-chart');
+  var contextPlValue = chartIdPlValue.getContext('2d');
+
+  Chart.helpers.each(Chart.instances, function (instance) {
+    if (instance.ctx === context || instance.ctx === contextDoughnut || instance.ctx === contextPl || instance.ctx === contextPlValue) {
+      instance.destroy();
+      return;
+    }
+  });
+
+  const connection = await mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: dbConnectionString,
+  });
+
+  [rows] = await connection.query(
+    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
+      i.name AS instrument, i.sector_id FROM holdings AS h INNER JOIN instrument AS i ON
+      h.instrument_id = i.id WHERE i.is_active = true AND h.date =  '${filterDate}'
+      ORDER BY id DESC;`
+  );
+
+  doughnutChart(rows);
+  compareChart(rows);
+  plChart(rows);
+  plValueChart(rows);
 });
 getData();
