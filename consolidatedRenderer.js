@@ -240,6 +240,7 @@ form.addEventListener("submit", async (event) => {
   const schemeValue = document.getElementById("scheme-value").value;
   const investedValue = document.getElementById("cumulative-value-invested").value;
   const currentValue = document.getElementById("valuation").value;
+  const pL = currentValue - investedValue ;
   connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -249,7 +250,7 @@ form.addEventListener("submit", async (event) => {
 
 
   // Save form data to MySQL database
-  const query = `INSERT INTO cumulative_holdings (date, scheme_id, invested_value, current_value) VALUES ('${date}', ${schemeValue}, ${investedValue}, ${currentValue})`;
+  const query = `INSERT INTO cumulative_holdings (date, scheme_id, invested_value, current_value, p_l) VALUES ('${date}', ${schemeValue}, ${investedValue}, ${currentValue}, ${pL})`;
   await connection.query(query);
   // ipcRenderer.send("reload-app");
 
