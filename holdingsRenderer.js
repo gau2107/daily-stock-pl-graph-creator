@@ -35,9 +35,10 @@ async function getData() {
 
   [rows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
-      i.name AS instrument, i.sector_id FROM holdings AS h INNER JOIN instrument AS i ON
+      i.name AS instrument, i.sector_id, i.id as instrumentId FROM holdings AS h INNER JOIN instrument AS i ON
       h.instrument_id = i.id WHERE i.is_active = true ORDER BY id DESC LIMIT ${totalInstruments};`
   );
+  rows = rows.sort((a, b) => a.instrumentId - b.instrumentId);
   let arr = Array(totalInstruments).fill(0);
   backgroundColors = arr.map(() => getRandomColor());
   doughnutChart(rows);
@@ -46,12 +47,13 @@ async function getData() {
   plValueChart(rows);
 
   [allRows] = await connection.query(
-    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
-    FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id WHERE i.is_active = true;`
+    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.id as instrumentId, i.sector_id
+    FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id WHERE i.is_active = true ORDER BY i.id;`
   );
   allHoldingsChart(allRows, rows, true);
 }
 
+// table data
 function displayData(parentData, instruments) {
   const itemsPerPage = 10; // Number of items to display per page
   const dataBody = document.getElementById('dataBody');
@@ -367,10 +369,11 @@ filterBtn.addEventListener("click", async () => {
 
   let [rows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
-      i.name AS instrument, i.sector_id FROM holdings AS h INNER JOIN instrument AS i ON
+      i.name AS instrument, i.sector_id, i.id as instrumentId FROM holdings AS h INNER JOIN instrument AS i ON
       h.instrument_id = i.id WHERE i.is_active = true ORDER BY id DESC LIMIT ${totalInstruments};`
   );
 
+  rows = rows.sort((a, b) => a.instrumentId - b.instrumentId);
   let [allRows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
     FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id WHERE i.is_active = true;`
@@ -420,11 +423,11 @@ graphFilterBtn.addEventListener("change", async () => {
 
   [rows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
-      i.name AS instrument, i.sector_id FROM holdings AS h INNER JOIN instrument AS i ON
+      i.name AS instrument, i.sector_id, i.id as instrumentId FROM holdings AS h INNER JOIN instrument AS i ON
       h.instrument_id = i.id WHERE i.is_active = true AND h.date =  '${filterDate}'
       ORDER BY id DESC;`
   );
-
+  rows = rows.sort((a, b) => a.instrumentId - b.instrumentId);
   doughnutChart(rows);
   compareChart(rows);
   plChart(rows);
