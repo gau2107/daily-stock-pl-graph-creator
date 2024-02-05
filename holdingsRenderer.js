@@ -169,21 +169,21 @@ function doughnutChart() {
 
 function compareChart(rows) {
   const labels = rows.map((item) => item.instrument);
-  const values = rows.map((item) => item.cur_val);
-  const values1 = rows.map((item) => item.avg_cost * item.qty);
+  const currentValues = rows.map((item) => item.cur_val);
+  const investedValues = rows.map((item) => item.avg_cost * item.qty);
   const data = {
     labels: labels,
     datasets: [
       {
-        label: "Invested value",
-        data: values1,
+        label: `Invested value ${investedValues.reduce((i, j) => i + j, 0).toFixed(2)}`,
+        data: investedValues,
         backgroundColor: "rgba(41, 128, 185, .5)",
         borderColor: "rgba(41, 128, 185, 1)",
         borderWidth: 1,
       },
       {
-        label: "Current value",
-        data: values,
+        label: `Current value ${currentValues.reduce((i, j) => parseFloat(i) + parseFloat(j), 0)}`,
+        data: currentValues,
         backgroundColor: "rgba(39, 174, 96, .5)",
         borderColor: "rgba(39, 174, 96, 1)",
         borderWidth: 1,
