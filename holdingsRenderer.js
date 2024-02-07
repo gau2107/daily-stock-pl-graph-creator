@@ -157,7 +157,7 @@ function doughnutChart() {
         },
         title: {
           display: true,
-          text: "Holdings doughnut",
+          text: "Holdings",
         },
       },
     },
@@ -182,7 +182,7 @@ function compareChart(rows) {
         borderWidth: 1,
       },
       {
-        label: `Current value ${currentValues.reduce((i, j) => parseFloat(i) + parseFloat(j), 0)}`,
+        label: `Current value ${(currentValues.reduce((i, j) => parseFloat(i) + parseFloat(j), 0)).toFixed(2)}`,
         data: currentValues,
         backgroundColor: "rgba(39, 174, 96, .5)",
         borderColor: "rgba(39, 174, 96, 1)",
