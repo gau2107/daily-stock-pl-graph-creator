@@ -237,7 +237,7 @@ async function createWindow() {
      `);
 
     const lastYearCurrentValue =
-      rows[rows.length - 261]?.current_value || rows[0].current_value;
+      rows[rows.length - 250]?.current_value || rows[0].current_value;
     const yearPlDifference = (lastValue - lastYearCurrentValue).toFixed(2);
     const yearPercent = (
       (yearPlDifference * 100) /
