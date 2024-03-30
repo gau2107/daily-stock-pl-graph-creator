@@ -282,11 +282,11 @@ function allHoldingsChart(rows, instruments, isRunningFirstTime) {
     const existingGroup = acc.find(
       (group) => new Date(group.date).getTime() === date
     );
-    if (existingGroup) {
+    if (existingGroup)
       existingGroup.data.push(obj);
-    } else {
+    else
       acc.push({ date: date, data: [obj] });
-    }
+
     return acc;
   }, []);
 

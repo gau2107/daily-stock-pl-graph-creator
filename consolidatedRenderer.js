@@ -8,20 +8,6 @@ const envFilePath =
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
-let months = new Map();
-months.set('01', 'January');
-months.set('02', 'February');
-months.set('03', 'March');
-months.set('04', 'April');
-months.set('05', 'May');
-months.set('06', 'June');
-months.set('07', 'July');
-months.set('08', 'August');
-months.set('09', 'September');
-months.set('10', 'October');
-months.set('11', 'November');
-months.set('12', 'December');
-
 
 // Replace the connection details with your own
 let connection;
@@ -32,11 +18,13 @@ async function getData() {
     password: "",
     database: dbConnectionString,
   });
-  let [rows] = await newConnection.query(`SELECT c.id, t.name as investment_type, s.name as investment_scheme, c.invested_value, c.current_value, c.date, c.p_l FROM cumulative_holdings as c INNER JOIN investment_scheme as s ON c.scheme_id = s.id INNER JOIN investment_types as t ON s.investment_type_id = t.id ORDER BY c.id`);
+  let [rows] = await newConnection.query(`SELECT c.id, t.name as investment_type, s.name as investment_scheme, c.invested_value, c.current_value, c.date, c.p_l 
+    FROM cumulative_holdings as c INNER JOIN investment_scheme as s ON c.scheme_id = s.id INNER JOIN investment_types as t ON s.investment_type_id = t.id
+    where s.is_active = true ORDER BY c.id`);
 
   // load dropdown with sector values
   const investmentTypeSelectBox = document.getElementById("scheme-value");
-  const investmentTypeQuery = "SELECT id, name FROM investment_scheme";
+  const investmentTypeQuery = "SELECT id, name FROM investment_scheme WHERE is_active = true";
 
 
   let [newRows] = await newConnection.query(investmentTypeQuery);
@@ -49,7 +37,7 @@ async function getData() {
   });
 
   generateChart(rows);
-  generatePieChart(rows);
+  generatePieChart(rows, newRows.length);
   let schemeArray = groupedByScheme(rows);
   for (let i = 0; i < 5; i++) {
     getIndividualChart(schemeArray[i]);
@@ -125,13 +113,12 @@ function getIndividualChart(obj) {
   div.appendChild(canvas);
 }
 
-function generatePieChart(rows) {
-  // TODO make 5 dynamic
-  const elements = rows.slice(-5);
+function generatePieChart(rows, totalInvestmentSchemes) {
+  const elements = rows.slice(-totalInvestmentSchemes);
 
   let labels = elements.map(r => r.investment_scheme);
   let currentValues = elements.map(r => r.current_value);
-  let totalCurrentValue = currentValues.reduce((sum, item) => sum + item, 0); 
+  let totalCurrentValue = currentValues.reduce((sum, item) => sum + item, 0);
   const currentChartData = {
     labels: labels,
     datasets: [
@@ -196,7 +183,7 @@ function generatePieChart(rows) {
 
 const groupedByMonth = (data) => {
   const groupedByMonthMap = data.reduce((result, item) => {
-    const month = item.date.split('-')[1]; // Extracting month from date
+    const month = item.date; // Extracting month from date
 
     if (!result.has(month)) {
       result.set(month, []);
@@ -211,7 +198,7 @@ const groupedByMonth = (data) => {
     const totalCurrentValue = data.reduce((sum, item) => sum + item.current_value, 0);
     const totalProfitValue = data.reduce((sum, item) => sum + item.p_l, 0);
 
-    month = months.get(month); // Assuming you have a Map named 'months' for month name lookup
+    month = month;
 
     return { month, data, totalInvestedValue, totalCurrentValue, totalProfitValue };
   });
@@ -240,7 +227,7 @@ form.addEventListener("submit", async (event) => {
   const schemeValue = document.getElementById("scheme-value").value;
   const investedValue = document.getElementById("cumulative-value-invested").value;
   const currentValue = document.getElementById("valuation").value;
-  const pL = currentValue - investedValue ;
+  const pL = currentValue - investedValue;
   connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
