@@ -167,8 +167,6 @@ async function createWindow() {
     totalPlTag.style.color = ${totalPl > 0 ? "'green'" : "'red'"};
     `);
 
-    // TODO quarterly result
-
     // get the highest value, lowest value & streak
     const highestValue = Math.max(...rows.map((row) => row.current_value));
     const percent = (
@@ -250,29 +248,13 @@ async function createWindow() {
       lastYearReturns.style.color = "${yearPlDifference > 0 ? "green" : "red"}";
       `);
 
-    win.webContents.executeJavaScript(`
-       let ctx = document.getElementById('current-chart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: ${JSON.stringify(getCurrentDataForChart(rows))}
-      });
-    `);
 
-    win.webContents.executeJavaScript(`
-      let ctx2 = document.getElementById('daily-chart').getContext('2d');
-      new Chart(ctx2, {
-        type: 'bar',
-        data: ${JSON.stringify(getDailyPlDataForChart(rows))}
-      });
-    `);
-
-    win.webContents.executeJavaScript(`
-     let ctx3 = document.getElementById('nifty-chart').getContext('2d');
-    new Chart(ctx3, {
-      type: 'line',
-      data: ${JSON.stringify(getNiftyDataForChart(rows))},
+    let quarterData = rows.filter((temp) => {
+      return (
+        dayjs(temp.date).isAfter(dayjs().subtract(3, "months"))
+      );
     });
-  `);
+    populateCharts(quarterData);
   });
 
   ipcMain.on("get-total-instruments", (event) => {
@@ -290,6 +272,23 @@ async function createWindow() {
   ipcMain.on("monthly-data", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
     rows = rows.slice(-22);
+
+    populateCharts(rows);
+  });
+
+  ipcMain.on("quarterly-data", async () => {
+    [rows] = await connection.query("SELECT * FROM daily_pl");
+    rows =  rows.filter((temp) => {
+      return (
+        dayjs(temp.date).isAfter(dayjs().subtract(3, "months"))
+      );
+    });
+
+    populateCharts(rows);
+  });
+
+  ipcMain.on("all-data", async () => {
+    [rows] = await connection.query("SELECT * FROM daily_pl");
 
     populateCharts(rows);
   });
@@ -312,13 +311,14 @@ async function createWindow() {
       type: 'line',
       data: ${JSON.stringify(getCurrentDataForChart(rows))}
     });
-  `);
+    `);
+
     win.webContents.executeJavaScript(`
-      ctx2 = document.getElementById('daily-chart').getContext('2d');
-      new Chart(ctx2, {
-        type: 'bar',
-        data: ${JSON.stringify(getDailyPlDataForChart(rows))}
-      });
+    ctx2 = document.getElementById('daily-chart').getContext('2d');
+    new Chart(ctx2, {
+      type: 'bar',
+      data: ${JSON.stringify(getDailyPlDataForChart(rows))}
+    });
     `);
 
     win.webContents.executeJavaScript(`

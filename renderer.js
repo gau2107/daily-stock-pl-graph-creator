@@ -37,25 +37,51 @@ form.addEventListener("submit", async (event) => {
   document.getElementById("form").reset();
 });
 
-const weeklyBtnEvent = document.getElementById("weekly");
-weeklyBtnEvent.addEventListener("click", (event) => {
+function handleActiveClass(element) {
+  weeklyBtn.classList.replace("btn-dark", "btn-secondary");
+  monthlyBtn.classList.replace("btn-dark", "btn-secondary");
+  quarterlyBtn.classList.replace("btn-dark", "btn-secondary");
+  allBtn.classList.replace("btn-dark", "btn-secondary");
+  filterBtn.classList.replace("btn-dark", "btn-secondary");
+  element.classList.replace("btn-secondary", "btn-dark");
+}
+
+const weeklyBtn = document.getElementById("weekly");
+weeklyBtn.addEventListener("click", (event) => {
+  handleActiveClass(weeklyBtn);
+  weeklyBtn.classList.replace("btn-secondary", "btn-dark");
   Chart.helpers.each(Chart.instances, (chart) => {
     chart.destroy();
   });
   ipcRenderer.send("weekly-data");
 });
 
-const monthlyBtnEvent = document.getElementById("monthly");
-monthlyBtnEvent.addEventListener("click", (event) => {
+const monthlyBtn = document.getElementById("monthly");
+monthlyBtn.addEventListener("click", (event) => {
+  handleActiveClass(monthlyBtn);
   Chart.helpers.each(Chart.instances, (chart) => {
     chart.destroy();
   });
   ipcRenderer.send("monthly-data");
 });
 
-const allBtnEvent = document.getElementById("all");
-allBtnEvent.addEventListener("click", () => {
-  ipcRenderer.send("reload-app");
+const quarterlyBtn = document.getElementById("quarterly");
+quarterlyBtn.addEventListener("click", (event) => {
+  handleActiveClass(quarterlyBtn);
+  Chart.helpers.each(Chart.instances, (chart) => {
+    chart.destroy();
+  });
+  ipcRenderer.send("quarterly-data");
+});
+
+
+const allBtn = document.getElementById("all");
+allBtn.addEventListener("click", () => {
+  handleActiveClass(allBtn);
+  Chart.helpers.each(Chart.instances, (chart) => {
+    chart.destroy();
+  });
+  ipcRenderer.send("all-data");
 });
 
 const filterBtn = document.getElementById("filter");
@@ -63,6 +89,7 @@ filterBtn.addEventListener("click", () => {
   const startDate = document.getElementById("start-date").value;
   const endDate = document.getElementById("end-date").value;
   if (!startDate || !endDate) return;
+  handleActiveClass(filterBtn);
   Chart.helpers.each(Chart.instances, (chart) => {
     chart.destroy();
   });
