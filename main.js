@@ -406,7 +406,7 @@ async function createWindow() {
         individualStockWindow.loadFile("individualStock.html");
         individualStockWindow.setMenu(null);
         individualStockWindow.maximize();
-        individualStockWindow.webContents.openDevTools();
+        // individualStockWindow.webContents.openDevTools();
       },
     },
     {

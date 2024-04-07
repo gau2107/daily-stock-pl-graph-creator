@@ -109,7 +109,7 @@ function generateChart(dates, value, niftyRows) {
       },
       {
         label: "Nifty 50",
-        data: stockRows,
+        data: finalData,
         backgroundColor: "rgba(200, 100, 100, .5)",
         borderColor: "rgba(200, 100, 100, 1)",
         pointStyle: false,

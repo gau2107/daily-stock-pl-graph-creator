@@ -41,6 +41,7 @@ function handleActiveClass(element) {
   weeklyBtn.classList.replace("btn-dark", "btn-secondary");
   monthlyBtn.classList.replace("btn-dark", "btn-secondary");
   quarterlyBtn.classList.replace("btn-dark", "btn-secondary");
+  yearlyBtn.classList.replace("btn-dark", "btn-secondary");
   allBtn.classList.replace("btn-dark", "btn-secondary");
   filterBtn.classList.replace("btn-dark", "btn-secondary");
   element.classList.replace("btn-secondary", "btn-dark");
@@ -49,7 +50,6 @@ function handleActiveClass(element) {
 const weeklyBtn = document.getElementById("weekly");
 weeklyBtn.addEventListener("click", (event) => {
   handleActiveClass(weeklyBtn);
-  weeklyBtn.classList.replace("btn-secondary", "btn-dark");
   Chart.helpers.each(Chart.instances, (chart) => {
     chart.destroy();
   });
