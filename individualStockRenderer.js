@@ -60,21 +60,23 @@ async function generateDataForChart(rows) {
     }
   }
   dates = dates.map((data) => new Date(data).toDateString());
-  [stockRows] = await connection.query(
+  [niftyData] = await connection.query(
     `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${dates.length};`
   );
-  let stockData = [...stockRows.reverse()];
-  let finalData = stockData.map(
-    (s) => ((s.nifty_50 - stockData[0].nifty_50) * 100) / stockData[0].nifty_50
-  );
+  let finalNiftyData = [...niftyData.reverse()];
+  
   for (let i = 0; i < values.length; i++)
-    generateChart(dates, values[i], finalData);
+    generateChart(dates, values[i], finalNiftyData);
 }
 
-function generateChart(dates, value, stockRows) {
+function generateChart(dates, value, niftyRows) {
+  let index = niftyRows.length - value.data.length;
+  let finalData = niftyRows.map(
+    (s) => ((s.nifty_50 - niftyRows[index].nifty_50) * 100) / niftyRows[index].nifty_50
+  );
   if (value.data.length < dates.length) {
     dates = dates.slice(dates.length - value.data.length);
-    stockRows = stockRows.slice(stockRows.length - value.data.length);
+    finalData = finalData.slice(finalData.length - value.data.length);
   }
   function colors(opacity) {
     return value.day_chg.map((day_chg) =>

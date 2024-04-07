@@ -287,6 +287,17 @@ async function createWindow() {
     populateCharts(rows);
   });
 
+  ipcMain.on("yearly-data", async () => {
+    [rows] = await connection.query("SELECT * FROM daily_pl");
+    rows =  rows.filter((temp) => {
+      return (
+        dayjs(temp.date).isAfter(dayjs().subtract(1, "year"))
+      );
+    });
+
+    populateCharts(rows);
+  });
+
   ipcMain.on("all-data", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
 
@@ -395,7 +406,7 @@ async function createWindow() {
         individualStockWindow.loadFile("individualStock.html");
         individualStockWindow.setMenu(null);
         individualStockWindow.maximize();
-        // individualStockWindow.webContents.openDevTools();
+        individualStockWindow.webContents.openDevTools();
       },
     },
     {

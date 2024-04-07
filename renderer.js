@@ -74,6 +74,15 @@ quarterlyBtn.addEventListener("click", (event) => {
   ipcRenderer.send("quarterly-data");
 });
 
+const yearlyBtn = document.getElementById("yearly");
+yearlyBtn.addEventListener("click", (event) => {
+  handleActiveClass(yearlyBtn);
+  Chart.helpers.each(Chart.instances, (chart) => {
+    chart.destroy();
+  });
+  ipcRenderer.send("yearly-data");
+});
+
 
 const allBtn = document.getElementById("all");
 allBtn.addEventListener("click", () => {
