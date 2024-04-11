@@ -145,7 +145,7 @@ ON
           sectorObj.investedVal.push(individualInstrumentObj.cur_val - individualInstrumentObj.p_l);
           sectorObj.curValArray.push(individualInstrumentObj.cur_val);
           sectorObj.plArray.push(parseFloat(individualInstrumentObj.p_l));
-          sectorObj.changePercent.push(((sectorObj.curValArray[sectorObj.curValArray.length - 1] - parseFloat(sectorObj.investedVal[index])) * 100) / parseFloat(sectorObj.investedVal[index]));
+          sectorObj.changePercent.push(((sectorObj.curValArray[sectorObj.curValArray.length - 1] - parseFloat(sectorObj.curValArray[0])) * 100) / parseFloat(sectorObj.curValArray[0]));
           sectorObj.dates.push(new Date(individualInstrumentObj.date).toDateString());
           individualInstrumentObj.color = getRandomColor();
         } else {
@@ -188,13 +188,11 @@ ON
   [stockRows] = await connection.query(
     `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${len};`
   );
-  [firstNifty] = await connection.query(
-    `SELECT nifty_50 FROM daily_pl WHERE id = 1;`
-  );
+
   let stockData = [...stockRows.reverse()];
   let finalData = stockData.map(
     (s) =>
-      ((s.nifty_50 - firstNifty[0].nifty_50) * 100) / firstNifty[0].nifty_50
+      ((s.nifty_50 - stockData[0].nifty_50) * 100) / stockData[0].nifty_50
   );
   for (let i = 0; i < copiedSectorGroupArray.length; i++) {
     generateChart(copiedSectorGroupArray[i], finalData);

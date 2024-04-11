@@ -278,7 +278,7 @@ async function createWindow() {
 
   ipcMain.on("quarterly-data", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
-    rows =  rows.filter((temp) => {
+    rows = rows.filter((temp) => {
       return (
         dayjs(temp.date).isAfter(dayjs().subtract(3, "months"))
       );
@@ -289,7 +289,7 @@ async function createWindow() {
 
   ipcMain.on("yearly-data", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
-    rows =  rows.filter((temp) => {
+    rows = rows.filter((temp) => {
       return (
         dayjs(temp.date).isAfter(dayjs().subtract(1, "year"))
       );
@@ -423,7 +423,7 @@ async function createWindow() {
         newWindow.loadFile("console.html");
         newWindow.setMenu(null);
         newWindow.maximize();
-        // newWindow.webContents.openDevTools();
+        newWindow.webContents.openDevTools();
       },
     },
     {
