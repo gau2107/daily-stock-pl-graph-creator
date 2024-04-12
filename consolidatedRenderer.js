@@ -1,7 +1,7 @@
 const mysql = require("mysql2/promise");
-const { ipcRenderer } = require("electron");
 const dotenv = require("dotenv");
 const path = require("path");
+const dayjs = require("dayjs");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
@@ -20,12 +20,11 @@ async function getData() {
   });
   let [rows] = await newConnection.query(`SELECT c.id, t.name as investment_type, s.name as investment_scheme, c.invested_value, c.current_value, c.date, c.p_l 
     FROM cumulative_holdings as c INNER JOIN investment_scheme as s ON c.scheme_id = s.id INNER JOIN investment_types as t ON s.investment_type_id = t.id
-    where s.is_active = true ORDER BY c.id`);
+    where s.is_active = true ORDER BY c.date`);
 
   // load dropdown with sector values
   const investmentTypeSelectBox = document.getElementById("scheme-value");
   const investmentTypeQuery = "SELECT id, name FROM investment_scheme WHERE is_active = true";
-
 
   let [newRows] = await newConnection.query(investmentTypeQuery);
   // Populate the select box options
@@ -36,17 +35,45 @@ async function getData() {
     investmentTypeSelectBox.appendChild(option.cloneNode(true));
   });
 
+  let [niftyRows] = await newConnection.query(`SELECT id, date, nifty_50
+    FROM daily_pl
+    JOIN (
+        SELECT MAX(date) AS max_date
+        FROM daily_pl
+        GROUP BY YEAR(date), MONTH(date)
+    ) AS max_dates
+    ON daily_pl.date = max_dates.max_date
+    ORDER BY date`);
+
+    niftyRows.pop();
+    niftyRows.splice(0, (niftyRows.length - (rows.length / 2) - 1))
+
+    let newNiftyRows = [];
+
+    let tempFirstValue = niftyRows[0].nifty_50;
+    niftyRows.forEach((data) => {
+
+      let p_l = data.nifty_50 - tempFirstValue;
+      newNiftyRows.push({
+        date: data.date,
+        p_l: p_l,
+        invested_value: tempFirstValue
+      })
+    });
+    newNiftyRows.shift();
+
   generateChart(rows);
   generatePieChart(rows, newRows.length);
   let schemeArray = groupedByScheme(rows);
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < newRows.length; i++) {
     getIndividualChart(schemeArray[i]);
   }
+  getIndividualChart({title: 'Nifty', data: newNiftyRows});
 }
 
 function generateChart(rows) {
   rows = groupedByMonth(rows);
-  let labels = rows.map(r => r.month);
+  let labels = rows.map(r => dayjs(r.month).format(`MMM YYYY`));
   let values = rows.map(r => ((r.totalProfitValue * 100) / r.totalInvestedValue).toFixed(2));
   const data = {
     labels: labels,
@@ -77,7 +104,7 @@ function generateChart(rows) {
 }
 
 function getIndividualChart(obj) {
-  let labels = obj.data.map(r => r.date);
+  let labels = obj.data.map(r => dayjs(r.date).format(`MMM YYYY`));
   let values = obj.data.map(r => ((r.p_l * 100) / r.invested_value).toFixed(2));
   const data = {
     labels: labels,
@@ -104,7 +131,7 @@ function getIndividualChart(obj) {
   };
 
   const div = document.createElement("div");
-  div.className = "col-md-4";
+  div.className = "col-md-6";
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   new Chart(ctx, config);
@@ -239,7 +266,6 @@ form.addEventListener("submit", async (event) => {
   // Save form data to MySQL database
   const query = `INSERT INTO cumulative_holdings (date, scheme_id, invested_value, current_value, p_l) VALUES ('${date}', ${schemeValue}, ${investedValue}, ${currentValue}, ${pL})`;
   await connection.query(query);
-  // ipcRenderer.send("reload-app");
 
   // Reset form
   document.getElementById("form").reset();
