@@ -444,6 +444,23 @@ async function createWindow() {
       },
     },
     {
+      label: "Playground",
+      click: async () => {
+        newWindow = new BrowserWindow({
+          webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            preload: path.join(__dirname + "/preload.js"),
+          },
+          parent: win,
+        });
+        newWindow.loadFile("playground.html");
+        newWindow.setMenu(null);
+        newWindow.maximize();
+        // newWindow.webContents.openDevTools();
+      },
+    },
+    {
       label: "About",
       click: async () => {
         await shell.openExternal("https://gsolanki.vercel.app/");
