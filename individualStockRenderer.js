@@ -2,6 +2,7 @@ const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const path = require("path");
 const dayjs = require("dayjs");
+const { getRandomColor } = require("./src/utils/utils");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
@@ -22,14 +23,6 @@ async function getData() {
   FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id where i.is_active = true;;`);
 
   generateDataForChart(rows);
-}
-function getRandomColor() {
-  const letters = "0123456789ABCDEF";
-  let color = "#";
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
 }
 
 async function generateDataForChart(rows) {

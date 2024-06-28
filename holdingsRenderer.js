@@ -4,6 +4,7 @@ const path = require("path");
 const dayjs = require("dayjs");
 
 const { ipcRenderer } = require("electron");
+const { getRandomColor } = require("./src/utils/utils");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
@@ -17,14 +18,7 @@ ipcRenderer.on("total-instruments", (event, data) => {
   totalInstruments = data;
 });
 let backgroundColors;
-function getRandomColor() {
-  const letters = "0123456789ABCDEF";
-  let color = "#";
-  for (let i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
+
 async function getData() {
   const connection = await mysql.createConnection({
     host: "localhost",

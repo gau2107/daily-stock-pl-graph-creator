@@ -2,6 +2,7 @@ const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const path = require("path");
 const dayjs = require("dayjs");
+const { getRandomColor, colors } = require("./src/utils/utils");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
@@ -145,6 +146,12 @@ function generatePieChart(rows, totalInvestmentSchemes) {
 
   let labels = elements.map(r => r.investment_scheme);
   let currentValues = elements.map(r => r.current_value);
+  let bgColors = [];
+  let colors = [];
+  for(let i = 0; i < currentValues.length; i++) {
+    colors.push(getRandomColor());
+    bgColors.push("black");
+  }
   let totalCurrentValue = currentValues.reduce((sum, item) => sum + item, 0);
   const currentChartData = {
     labels: labels,
@@ -152,6 +159,8 @@ function generatePieChart(rows, totalInvestmentSchemes) {
       {
         label: 'Current Value',
         data: currentValues,
+        borderColor: bgColors,
+        backgroundColor: colors,
         hoverOffset: 5,
       }
     ],
@@ -161,6 +170,7 @@ function generatePieChart(rows, totalInvestmentSchemes) {
     data: currentChartData,
     options: {
       responsive: true,
+      // borderColor: "black",
       maintainAspectRatio: false,
       plugins: {
         title: {
@@ -180,6 +190,8 @@ function generatePieChart(rows, totalInvestmentSchemes) {
     datasets: [
       {
         label: `Current Value`,
+        borderColor: bgColors,
+        backgroundColor: colors,
         data: investedValues,
         hoverOffset: 5,
       }
