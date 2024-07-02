@@ -427,6 +427,23 @@ async function createWindow() {
       },
     },
     {
+      label: "Statistics",
+      click: async () => {
+        newWindow = new BrowserWindow({
+          webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+            preload: path.join(__dirname + "/preload.js"),
+          },
+          parent: win,
+        });
+        newWindow.loadFile("statistics.html");
+        newWindow.setMenu(null);
+        newWindow.maximize();
+        newWindow.webContents.openDevTools();
+      },
+    },
+    {
       label: "Cumulative Holdings",
       click: async () => {
         newWindow = new BrowserWindow({

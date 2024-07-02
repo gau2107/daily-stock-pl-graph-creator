@@ -47,7 +47,9 @@
 .contribution-box.very-very-low {
   background-color: #ff3333;
 }
-
+.fr {
+  float: right;
+}
 .mr-10 {
   margin-right: 10px;
 }
