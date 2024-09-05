@@ -36,6 +36,17 @@ async function getData() {
     investmentTypeSelectBox.appendChild(option.cloneNode(true));
   });
 
+  
+
+  generateChart(rows);
+  generatePieChart(rows, newRows.length);
+  let maxLen = 0;
+  let schemeArray = groupedByScheme(rows);
+  for (let i = 0; i < newRows.length; i++) {
+    maxLen = schemeArray[i].data.length > maxLen ? schemeArray[i].data.length : maxLen;
+    getIndividualChart(schemeArray[i]);
+  }
+
   let [niftyRows] = await newConnection.query(`SELECT id, date, nifty_50
     FROM daily_pl
     JOIN (
@@ -47,7 +58,7 @@ async function getData() {
     ORDER BY date`);
 
     niftyRows.pop();
-    niftyRows.splice(0, (niftyRows.length - (rows.length / 2) - 1))
+    niftyRows = niftyRows.slice(-maxLen-1)
 
     let newNiftyRows = [];
 
@@ -63,12 +74,6 @@ async function getData() {
     });
     newNiftyRows.shift();
 
-  generateChart(rows);
-  generatePieChart(rows, newRows.length);
-  let schemeArray = groupedByScheme(rows);
-  for (let i = 0; i < newRows.length; i++) {
-    getIndividualChart(schemeArray[i]);
-  }
   getIndividualChart({title: 'Nifty', data: newNiftyRows});
 }
 
