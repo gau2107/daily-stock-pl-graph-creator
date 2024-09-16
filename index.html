@@ -215,7 +215,11 @@
                 }
 
                 if (key === 'current_value') {
-                  data[i][key] = `₹${data[i][key].toLocaleString("en-IN")} (${((data[i]?.current_value - data[i + 1]?.current_value || 0) * 100 / data[i + 1]?.current_value || 1).toFixed(2)}%) ${dailyPercent > niftyPercent ? ' 👑' : ''}`
+                  const tempVal = (data[i]?.current_value - data[i + 1]?.current_value || 0) * 100 / data[i + 1]?.current_value || 1;
+                  data[i][key] = `₹${data[i][key].toLocaleString("en-IN")} (${(tempVal.toFixed(2))}%) ${dailyPercent > niftyPercent ? ' 👑' : ''}`
+                  const innerDiv = document.createElement('div');
+                  innerDiv.className = "contribution-box " + getClass(tempVal);
+                  contributionDiv.appendChild(innerDiv);
                 }
 
 
@@ -225,11 +229,6 @@
                   cell.textContent = data[i][key];
                 row.appendChild(cell);
 
-                if (key === 'daily_pl') {
-                  const innerDiv = document.createElement('div');
-                  innerDiv.className = "contribution-box " + getClass(parseFloat(data[i][key]));
-                  contributionDiv.appendChild(innerDiv);
-                }
               }
             }
 
@@ -239,14 +238,14 @@
         }
 
         function getClass(val) {
-          if (val > 0 && val < 200) return 'active'
-          else if (val > 200 && val < 400) return 'medium'
-          else if (val > 400 && val < 600) return 'high'
-          else if (val > 600) return 'very-high'
-          else if (val > -200 && val < 0) return 'low'
-          else if (val > -400 && val < -200) return 'medium-low'
-          else if (val > -600 && val < -400) return 'very-low'
-          else if (val < -600) return 'very-very-low'
+          if (val > 0 && val < .33) return 'active'
+          else if (val > .33 && val < .66) return 'medium'
+          else if (val > .66 && val < .99) return 'high'
+          else if (val > .99) return 'very-high'
+          else if (val > -.33 && val < 0) return 'low'
+          else if (val > -.66 && val < -.33) return 'medium-low'
+          else if (val > -.99 && val < -.66) return 'very-low'
+          else if (val < -.99) return 'very-very-low'
 
 
           else return '';
