@@ -418,7 +418,7 @@ graphFilterBtn.addEventListener("change", async () => {
   [rows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
       i.name AS instrument, i.sector_id, i.id as instrumentId FROM holdings AS h INNER JOIN instrument AS i ON
-      h.instrument_id = i.id WHERE i.is_active = true AND h.date =  '${filterDate}'
+      h.instrument_id = i.id WHERE i.is_active = true AND h.date = '${filterDate}'
       ORDER BY id DESC;`
   );
   rows = rows.sort((a, b) => a.instrumentId - b.instrumentId);
