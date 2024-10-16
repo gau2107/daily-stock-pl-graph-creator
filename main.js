@@ -35,7 +35,7 @@ async function createWindow() {
   });
 
   win.loadFile("index.html");
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 
   ipcMain.on("reload-app", async () => {
     [rows] = await connection.query("SELECT * FROM daily_pl");
@@ -118,21 +118,13 @@ async function createWindow() {
         },
       ],
     };
-  }
+  }  
 
   win.webContents.on("did-finish-load", async () => {
     win.totalInstruments = instruments.length;
 
     let [ascRows] = await connection.query("SELECT * FROM daily_pl ORDER BY id DESC LIMIT 10");
-
-    let [count] = await connection.query("SELECT COUNT(id) as count FROM daily_pl");
-
     const rows = [...ascRows].reverse();
-
-    // display history data
-    win.webContents.executeJavaScript(
-      `displayData(${JSON.stringify(ascRows)}, ${JSON.stringify(count[0])})`
-    );
 
     // get the highest profit, lowest profit, and last PL
     const highestPl = Math.max(...rows.map((row) => row.daily_pl));
