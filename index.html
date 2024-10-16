@@ -170,7 +170,7 @@
       let curPageNo = 1;
 
       // Function to display data in the HTML table with pagination
-      function displayData(parentData) {
+      function displayData(parentData, count) {
         const itemsPerPage = 10; // Number of items to display per page
         const dataBody = document.getElementById('dataBody');
         const pagination = document.getElementById('pagination');
@@ -178,7 +178,7 @@
         const contributionDiv = document.getElementById('contributionDiv');
 
         // Calculate the number of pages
-        const totalPages = Math.ceil(parentData.length / itemsPerPage);
+        const totalPages = Math.ceil(count.count / itemsPerPage);
 
         // Function to display a specific page
         function displayPage(pageNumber) {
