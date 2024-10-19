@@ -123,21 +123,23 @@ async function createWindow() {
   win.webContents.on("did-finish-load", async () => {
     win.totalInstruments = instruments.length;
 
-    let [ascRows] = await connection.query("SELECT * FROM daily_pl ORDER BY id DESC LIMIT 10");
-    const rows = [...ascRows].reverse();
+    let [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'month').format('YYYY-MM-DD')}'`);
+    
+    let [startRow] = await connection.query("SELECT * FROM daily_pl LIMIT 1");
 
+    let [yearRow] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'year').format('YYYY-MM-DD')}' LIMIT 1`);
     // get the highest profit, lowest profit, and last PL
-    const highestPl = Math.max(...rows.map((row) => row.daily_pl));
+    let [maxProfit] = await connection.query(`SELECT MAX(daily_pl) as max, MAX(current_value) as maxCV FROM daily_pl`)
     win.webContents
       .executeJavaScript(`const highestPlTag = document.getElementById("highest-profit");
-    highestPlTag.innerHTML = ${highestPl};
+    highestPlTag.innerHTML = ${maxProfit[0].max};
     highestPlTag.style.color = 'green';
     `);
 
-    const lowestPl = Math.min(...rows.map((row) => row.daily_pl));
+    let [minProfit] = await connection.query(`SELECT MIN(daily_pl) as min FROM daily_pl`)
     win.webContents
       .executeJavaScript(`const lowestPlTag = document.getElementById("lowest-profit");
-    lowestPlTag.innerHTML = ${lowestPl};
+    lowestPlTag.innerHTML = ${minProfit[0].min};
     lowestPlTag.style.color = 'red';
     `);
 
@@ -154,7 +156,7 @@ async function createWindow() {
     `);
 
     const totalPl = rows[rows.length - 1].total_pl;
-    const totalPlPercent = ((totalPl * 100) / rows[0].current_value).toFixed(2);
+    const totalPlPercent = ((totalPl * 100) / startRow[0].current_value).toFixed(2);
     win.webContents
       .executeJavaScript(`const totalPlTag = document.getElementById("total-pl");
     totalPlTag.innerHTML = ${totalPl};
@@ -163,10 +165,10 @@ async function createWindow() {
     `);
 
     // get the highest value, lowest value & streak
-    const highestValue = Math.max(...rows.map((row) => row.current_value));
+    const highestValue = maxProfit[0].maxCV;
     const percent = (
-      ((highestValue - rows[0].current_value) * 100) /
-      rows[0].current_value
+      ((highestValue - startRow[0].current_value) * 100) /
+      startRow[0].current_value
     ).toFixed(2);
     win.webContents
       .executeJavaScript(`const highestValueTag = document.getElementById("highest-value");
@@ -203,7 +205,7 @@ async function createWindow() {
 
     // compare last week to this week
     const lastValue = rows[rows.length - 1].current_value;
-    const lastWeekPl = rows[rows.length - 6].current_value;
+    const lastWeekPl = rows[rows.length - 5].current_value;
     const plDifference = lastValue - lastWeekPl;
 
     win.webContents
@@ -215,7 +217,7 @@ async function createWindow() {
 
     // compare last month to this month
     const lastMonthPl =
-      rows[rows.length - 21]?.current_value || rows[0].current_value;
+      rows[0]?.current_value || startRow[0].current_value;
     const monthPlDifference = lastValue - lastMonthPl;
     const lastMonthPlPercent = (
       (monthPlDifference * 100) /
@@ -230,7 +232,7 @@ async function createWindow() {
      `);
 
     const lastYearCurrentValue =
-      rows[rows.length - 250]?.current_value || rows[0].current_value;
+    yearRow[0]?.current_value || startRow[0].current_value;
     const yearPlDifference = (lastValue - lastYearCurrentValue).toFixed(2);
     const yearPercent = (
       (yearPlDifference * 100) /
@@ -250,7 +252,7 @@ async function createWindow() {
   });
 
   ipcMain.on("weekly-data", async () => {
-    [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(5, 'days').format('YYYY-MM-DD')}'`);
+    [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'week').format('YYYY-MM-DD')}'`);
 
     populateCharts(rows);
   });
