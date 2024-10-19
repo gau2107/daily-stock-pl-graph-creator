@@ -242,14 +242,6 @@ async function createWindow() {
       lastYearReturns.innerHTML = lastYearReturns.innerHTML + " "+"("+${yearPercent}+"%)";        
       lastYearReturns.style.color = "${yearPlDifference > 0 ? "green" : "red"}";
       `);
-
-
-    let quarterData = rows.filter((temp) => {
-      return (
-        dayjs(temp.date).isAfter(dayjs().subtract(3, "months"))
-      );
-    });
-    populateCharts(quarterData);
   });
 
   ipcMain.on("get-total-instruments", (event) => {
@@ -258,37 +250,25 @@ async function createWindow() {
   });
 
   ipcMain.on("weekly-data", async () => {
-    [rows] = await connection.query("SELECT * FROM daily_pl");
-    rows = rows.slice(-5);
+    [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(5, 'days').format('YYYY-MM-DD')}'`);
 
     populateCharts(rows);
   });
 
   ipcMain.on("monthly-data", async () => {
-    [rows] = await connection.query("SELECT * FROM daily_pl");
-    rows = rows.slice(-22);
+    [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'month').format('YYYY-MM-DD')}'`);
 
     populateCharts(rows);
   });
 
   ipcMain.on("quarterly-data", async () => {
-    [rows] = await connection.query("SELECT * FROM daily_pl");
-    rows = rows.filter((temp) => {
-      return (
-        dayjs(temp.date).isAfter(dayjs().subtract(3, "months"))
-      );
-    });
+    [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(3, 'months').format('YYYY-MM-DD')}'`);
 
     populateCharts(rows);
   });
 
   ipcMain.on("yearly-data", async () => {
-    [rows] = await connection.query("SELECT * FROM daily_pl");
-    rows = rows.filter((temp) => {
-      return (
-        dayjs(temp.date).isAfter(dayjs().subtract(1, "year"))
-      );
-    });
+    [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'year').format('YYYY-MM-DD')}'`);
 
     populateCharts(rows);
   });

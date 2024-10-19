@@ -151,7 +151,7 @@ async function start() {
   });
 
   loadTable();
-
+  ipcRenderer.send("quarterly-data");
 }
 async function loadTable(skip = 0) {
 
@@ -252,7 +252,6 @@ fileUploadInput.addEventListener("change", async (event) => {
       for (let i = 0; i < data.length; i++) {
         if (data[i][0].startsWith("MCDOW")) data[i][0] = "UNITDSPR";
         if (data[i][0].startsWith("SGBJUN")) data[i][0] = "SGBJUNE31";
-        if (data[i][0].startsWith("HCL")) data[i][0] = "HCL-INSYS";
         let d = table.find((d) => d.name === data[i][0]);
         data[i][0] = d.id;
       }
