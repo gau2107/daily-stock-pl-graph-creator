@@ -127,13 +127,20 @@ function displayData(parentData, count) {
     for (let i = 1; i <= totalPages; i++) {
       const link = document.createElement('li');
       link.classList.add('page-item');
-      link.innerHTML = `<a id="page-${i}" class="page-link ${curPageNo == i ? 'active' : ''}" href="#">${i}</a>`;
-      link.addEventListener('click', (event) => {
-        // Prevent the default behavior of the click event
-        event.preventDefault();
-        curPageNo = i;
-        loadTable((i - 1) * 10);
-      });
+      
+      if(i > 2 && ![curPageNo - 1, curPageNo, curPageNo + 1].includes(i) && i < (totalPages - 1)) {
+        link.innerHTML = `↔`;
+      }
+      else {
+        link.innerHTML = `<a id="page-${i}" class="page-link ${curPageNo == i ? 'active' : ''}" href="#">${i}</a>`;
+        link.addEventListener('click', (event) => {
+          // Prevent the default behavior of the click event
+          event.preventDefault();
+          curPageNo = i;
+          loadTable((i - 1) * 10);
+        });
+      }
+      
       pagination.appendChild(link);
     }
   }
