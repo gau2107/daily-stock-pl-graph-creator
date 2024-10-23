@@ -9,7 +9,18 @@
 
 <body>
   <div id="container" class="container">
-    <h1>Sector detail</h1>
+    <div class="row">
+      <div class="col-md-6">
+        <h1>Sector detail</h1>
+      </div>
+      <div class="btn-group col-md-6 mt-2 mb-2">
+        <button type="button" class="btn btn-secondary rounded mr-10" id="weekly">Weekly</button>
+        <button type="button" class="btn btn-secondary rounded mr-10" id="monthly">Monthly</button>
+        <button type="button" class="btn btn-dark rounded mr-10" id="quarterly">Quarterly</button>
+        <button type="button" class="btn btn-secondary rounded mr-10" id="yearly">Yearly</button>
+        <button type="button" class="btn btn-secondary rounded" id="all">All</button>
+      </div>
+    </div>
     <div class="row mb-3">
       <div class="col-md-4">
         <canvas id="doughnut-chart"></canvas>

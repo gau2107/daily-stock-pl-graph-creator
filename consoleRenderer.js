@@ -185,21 +185,6 @@ ON
       sectorObj.dayChg.push(sectorObj.plArray[i] - sectorObj.plArray[res])
     }
   });
-  let len = copiedSectorGroupArray[0].graph.length;
-  [stockRows] = await connection.query(
-    `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${len};`
-  );
-  [firstNifty] = await connection.query(
-    `SELECT nifty_50 FROM daily_pl WHERE id = 1;`
-  );
-  let stockData = [...stockRows.reverse()];
-  let finalData = stockData.map(
-    (s) =>
-      ((s.nifty_50 - firstNifty[0].nifty_50) * 100) / firstNifty[0].nifty_50
-  );
-  for (let i = 0; i < copiedSectorGroupArray.length; i++) {
-    generateChart(copiedSectorGroupArray[i], finalData);
-  }
   for (let i = 0; i < copiedSectorGroupArray.length; i++) {
     generateBarChart(copiedSectorGroupArray[i]);
   }
@@ -284,48 +269,6 @@ function compareChart(sectorGroupArray) {
   new Chart(chartCanvas, config);
 }
 
-
-
-function generateChart(value, stockRows) {
-  const data = {
-    labels: value.dates,
-    datasets: [
-      {
-        label: `${value.sector} (${value.instrumentNames.join(", ")})(${value.changePercent[value.changePercent.length - 1].toFixed(2)}%)`,
-        data: value.changePercent,
-        backgroundColor: value.color,
-        borderColor: value.color,
-        pointStyle: false,
-        tension: .2
-      },
-      {
-        label: "Nifty 50",
-        data: stockRows,
-        backgroundColor: "rgba(200, 100, 100, .5)",
-        borderColor: "rgba(200, 100, 100, 1)",
-        pointStyle: false,
-        tension: .2
-      },
-    ],
-  };
-  const config = {
-    type: "line",
-    data: data,
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "top",
-        },
-      },
-    },
-  };
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  new Chart(ctx, config);
-  const container = document.getElementById("container");
-  container.appendChild(canvas);
-}
 
 function generateBarChart(value) {
   let label = (value.dayChg.filter(day_chg => day_chg > 0).length * 100 / value.dayChg.length).toFixed(2);
