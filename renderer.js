@@ -129,8 +129,12 @@ function displayData(parentData, count) {
       link.classList.add('page-item');
       
       if(i > 2 && ![curPageNo - 1, curPageNo, curPageNo + 1].includes(i) && i < (totalPages - 1)) {
-        link.innerHTML = `↔`;
+        if((i == curPageNo-2) || (curPageNo+2 == i)) {
+          isDot = true;
+          link.innerHTML = `<a class="page-link">...</a>`;
+        }
       }
+      
       else {
         link.innerHTML = `<a id="page-${i}" class="page-link ${curPageNo == i ? 'active' : ''}" href="#">${i}</a>`;
         link.addEventListener('click', (event) => {
