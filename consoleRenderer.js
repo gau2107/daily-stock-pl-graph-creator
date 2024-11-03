@@ -2,6 +2,7 @@ const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const path = require("path");
 const { getRandomColor, colors } = require("./src/utils/utils");
+const dayjs = require("dayjs");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
@@ -9,7 +10,14 @@ dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 let connection;
-async function getData() {
+async function getData(duration, typeOfDuration) {
+  Chart.helpers.each(Chart.instances, (chart) => {
+    chart.destroy();
+  });
+  const row = document.getElementById("row");
+  while (row.firstChild) {
+    row.removeChild(row.firstChild);
+  }
   connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -35,7 +43,9 @@ ON
     s.id = i.sector_id
 INNER JOIN holdings AS h
 ON
-    i.id = h.instrument_id where i.is_active = true;`);
+    i.id = h.instrument_id 
+    WHERE h.date > '${dayjs().subtract(duration, typeOfDuration).format('YYYY-MM-DD')}' 
+    AND i.is_active = true;`);
 
   let sectorGroupArray = [];
   rows.forEach((rowData) => {
@@ -272,6 +282,8 @@ function compareChart(sectorGroupArray) {
 
 function generateBarChart(value) {
   let label = (value.dayChg.filter(day_chg => day_chg > 0).length * 100 / value.dayChg.length).toFixed(2);
+  value.dates.shift();
+  value.dayChg.shift();
   const data = {
     labels: value.dates,
     datasets: [
@@ -305,4 +317,47 @@ function generateBarChart(value) {
   row.appendChild(div);
   div.appendChild(canvas);
 }
-getData();
+
+
+const weeklyBtn = document.getElementById("weekly");
+const monthlyBtn = document.getElementById("monthly");
+const quarterlyBtn = document.getElementById("quarterly");
+const yearlyBtn = document.getElementById("yearly");
+const allBtn = document.getElementById("all");
+
+weeklyBtn.addEventListener("click", (event) => {
+  handleActiveClass(weeklyBtn);
+  getData(8, 'days');
+});
+
+monthlyBtn.addEventListener("click", (event) => {
+  handleActiveClass(monthlyBtn);
+  getData(1, 'month');
+});
+
+quarterlyBtn.addEventListener("click", (event) => {
+  handleActiveClass(quarterlyBtn);
+  getData(3, 'months');
+});
+
+yearlyBtn.addEventListener("click", (event) => {
+  handleActiveClass(yearlyBtn);
+  getData(1, 'year');
+});
+
+
+allBtn.addEventListener("click", () => {
+  handleActiveClass(allBtn);
+  getData();
+});
+
+function handleActiveClass(element) {
+  weeklyBtn.classList.replace("btn-dark", "btn-secondary");
+  monthlyBtn.classList.replace("btn-dark", "btn-secondary");
+  quarterlyBtn.classList.replace("btn-dark", "btn-secondary");
+  yearlyBtn.classList.replace("btn-dark", "btn-secondary");
+  allBtn.classList.replace("btn-dark", "btn-secondary");
+  element.classList.replace("btn-secondary", "btn-dark");
+}
+
+getData(3, 'months');
