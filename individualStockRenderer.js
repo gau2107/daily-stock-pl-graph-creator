@@ -10,7 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 let connection;
-async function getData() {
+async function getData(startDate, endDate) {
   connection = await mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -18,9 +18,24 @@ async function getData() {
     database: dbConnectionString,
   });
 
+  Chart.helpers.each(Chart.instances, function (instance) {
+    instance.destroy();
+  });
+  var parentElement = document.getElementById('container'); // Replace with the actual ID of your parent element
+  while (parentElement.firstChild) {
+    parentElement.removeChild(parentElement.firstChild);
+  }
+
   [rows] =
-    await connection.query(`SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
-  FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id where i.is_active = true;;`);
+    await connection.query(`
+      SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, 
+      h.day_chg, i.name AS instrument, i.sector_id
+      FROM holdings AS h 
+      INNER JOIN instrument AS i ON h.instrument_id = i.id 
+      WHERE h.date > '${startDate.format('YYYY-MM-DD')}' 
+      AND h.date < '${endDate.format('YYYY-MM-DD')}' 
+      AND i.is_active = true;`
+    );
 
   generateDataForChart(rows);
 }
@@ -57,7 +72,7 @@ async function generateDataForChart(rows) {
     `SELECT nifty_50 FROM daily_pl ORDER BY id DESC LIMIT ${dates.length};`
   );
   let finalNiftyData = [...niftyData.reverse()];
-  
+
   for (let i = 0; i < values.length; i++)
     generateChart(dates, values[i], finalNiftyData);
 }
@@ -134,32 +149,7 @@ filterBtn.addEventListener("click", async () => {
   const startDate = document.getElementById("start-date").value;
   const endDate = document.getElementById("end-date").value;
   if (!startDate || !endDate) return;
-  Chart.helpers.each(Chart.instances, function (instance) {
-    instance.destroy();
-  });
-  var parentElement = document.getElementById('container'); // Replace with the actual ID of your parent element
-  while (parentElement.firstChild) {
-    parentElement.removeChild(parentElement.firstChild);
-  }
-
-  connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: dbConnectionString,
-  });
-
-  [rows] =
-    await connection.query(`SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
-  FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id where i.is_active = true;`);
-
-  const temp = rows.filter((temp) => {
-    return (
-      dayjs(temp.date).isAfter(dayjs(startDate).subtract(1, "day")) &&
-      dayjs(temp.date).isBefore(dayjs(endDate).add(1, "day"))
-    );
-  });
-  generateDataForChart(temp);
+  getData(dayjs(startDate), dayjs(endDate))
 
 });
-getData();
+getData(dayjs().subtract(3, 'months'), dayjs());
