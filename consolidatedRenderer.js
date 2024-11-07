@@ -116,14 +116,25 @@ function getIndividualChart(obj) {
     labels: labels,
     datasets: [
       {
+        label: ``,
+        data: values,
+        borderWidth: 1,
+        hoverOffset: 1,
+        type: "line",
+        backgroundColor: "rgba(173, 216, 300, 1)"
+      },
+      {
         label: `${obj.title} %`,
         data: values,
         hoverOffset: 5,
+        type: "bar",
+        backgroundColor: "rgba(173, 216, 300, 0.7)",
+        borderColor: "rgba(173, 216, 300, 1)",
+        borderWidth: 1
       }
     ],
   };
   const config = {
-    type: "bar",
     data: data,
     options: {
       responsive: true,
@@ -151,6 +162,7 @@ function generatePieChart(rows, totalInvestmentSchemes) {
 
   let labels = elements.map(r => r.investment_scheme);
   let currentValues = elements.map(r => r.current_value);
+
   let bgColors = [];
   let colors = [];
   for(let i = 0; i < currentValues.length; i++) {
@@ -175,7 +187,6 @@ function generatePieChart(rows, totalInvestmentSchemes) {
     data: currentChartData,
     options: {
       responsive: true,
-      // borderColor: "black",
       maintainAspectRatio: false,
       plugins: {
         title: {
