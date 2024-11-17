@@ -19,34 +19,6 @@ ipcRenderer.on("total-instruments", (event, data) => {
 });
 let backgroundColors;
 
-async function getData() {
-  const connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: dbConnectionString,
-  });
-
-  [rows] = await connection.query(
-    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
-      i.name AS instrument, i.sector_id, i.id as instrumentId FROM holdings AS h INNER JOIN instrument AS i ON
-      h.instrument_id = i.id WHERE i.is_active = true ORDER BY id DESC LIMIT ${totalInstruments};`
-  );
-  rows = rows.sort((a, b) => a.instrumentId - b.instrumentId);
-  let arr = Array(totalInstruments).fill(0);
-  backgroundColors = arr.map(() => getRandomColor());
-  doughnutChart(rows);
-  compareChart(rows);
-  plChart(rows);
-  plValueChart(rows);
-
-  [allRows] = await connection.query(
-    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.id as instrumentId, i.sector_id
-    FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id WHERE i.is_active = true ORDER BY i.id;`
-  );
-  allHoldingsChart(allRows, rows, true);
-}
-
 // table data
 function displayData(parentData, instruments) {
   const itemsPerPage = 10; // Number of items to display per page
@@ -124,7 +96,7 @@ function displayData(parentData, instruments) {
   createPaginationLinks();
 }
 
-function doughnutChart() {
+function doughnutChart(rows) {
   const labels = rows.map((item) => item.instrument);
   const values = rows.map((item) => item.cur_val);
   const data = {
@@ -340,11 +312,17 @@ function allHoldingsChart(rows, instruments, isRunningFirstTime) {
   }
 }
 
+// Code for when user click on filter btn which contains start and end date
 const filterBtn = document.getElementById("filter");
 filterBtn.addEventListener("click", async () => {
   const startDate = document.getElementById("start-date").value;
   const endDate = document.getElementById("end-date").value;
   if (!startDate || !endDate) return;
+  getDataAsPerStartEndDate(startDate, endDate);
+  
+});
+
+async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) {
   let chartId = document.getElementById('total-chart');
   var context = chartId.getContext('2d');
   Chart.helpers.each(Chart.instances, function (instance) {
@@ -361,28 +339,37 @@ filterBtn.addEventListener("click", async () => {
     database: dbConnectionString,
   });
 
-  let [rows] = await connection.query(
+  let [allInstruments] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
       i.name AS instrument, i.sector_id, i.id as instrumentId FROM holdings AS h INNER JOIN instrument AS i ON
       h.instrument_id = i.id WHERE i.is_active = true ORDER BY id DESC LIMIT ${totalInstruments};`
   );
 
-  rows = rows.sort((a, b) => a.instrumentId - b.instrumentId);
+  allInstruments = allInstruments.sort((a, b) => a.instrumentId - b.instrumentId);
   let [allRows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
-    FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id WHERE i.is_active = true;`
+    FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id 
+    WHERE h.date > '${dayjs(startDate).format('YYYY-MM-DD')}' 
+    AND h.date < '${dayjs(endDate).format('YYYY-MM-DD')}' 
+    AND i.is_active = true;`
   );
-  const temp = allRows.filter((temp) => {
-    return (
-      dayjs(temp.date).isAfter(dayjs(startDate).subtract(1, "day")) &&
-      dayjs(temp.date).isBefore(dayjs(endDate).add(1, "day"))
-    );
-  });
-  allHoldingsChart(temp, rows)
-});
 
-const graphFilterBtn = document.getElementById("filter-date");
-graphFilterBtn.addEventListener("change", async () => {
+  if(isRunningFirstTime) {
+    let arr = Array(totalInstruments).fill(0);
+    backgroundColors = arr.map(() => getRandomColor());
+    doughnutChart(allInstruments);
+    compareChart(allInstruments);
+    plChart(allInstruments);
+    plValueChart(allInstruments);
+  }
+ 
+  
+  allHoldingsChart(allRows, allInstruments, isRunningFirstTime)
+}
+
+// Code for when user select specific date from date traverser input tag
+const dateTraverserInput = document.getElementById("filter-date");
+dateTraverserInput.addEventListener("change", async () => {
   const filterDate = document.getElementById("filter-date").value;
   var date = new Date(filterDate);
   var dayOfWeek = date.getDay();
@@ -427,4 +414,4 @@ graphFilterBtn.addEventListener("change", async () => {
   plChart(rows);
   plValueChart(rows);
 });
-getData();
+getDataAsPerStartEndDate(dayjs().subtract(3, 'months').format('YYYY-MM-DD'), dayjs().format('YYYY-MM-DD'), true);
