@@ -20,15 +20,14 @@ ipcRenderer.on("total-instruments", (event, data) => {
 let backgroundColors;
 
 // table data
-function displayData(parentData, instruments) {
+function displayData(parentData, instruments, totalCount) {
   const itemsPerPage = 10; // Number of items to display per page
   const dataBody = document.getElementById('dataBody');
   const tableHead = document.getElementById('tableHead');
   const pagination = document.getElementById('pagination');
 
   // Calculate the number of pages
-  const totalPages = Math.ceil(parentData.length / itemsPerPage);
-
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
   for (let i = 0; i < instruments.length; i++) {
     const cell = document.createElement('th');
     cell.scope = "col";
@@ -37,7 +36,7 @@ function displayData(parentData, instruments) {
 
   }
   // Function to display a specific page
-  function displayPage(pageNumber) {
+  async function displayPage(pageNumber) {
     let data = JSON.parse(JSON.stringify(parentData)).reverse();
 
     dataBody.innerHTML = ''; // Clear the table body
@@ -242,7 +241,7 @@ function plValueChart(rows) {
   new Chart(chartCanvas, config);
 }
 
-function allHoldingsChart(rows, instruments, isRunningFirstTime) {
+function allHoldingsChart(rows, instruments, isRunningFirstTime, totalCount) {
   const groupedData = rows.reduce((acc, obj) => {
     const date = new Date(obj.date).getTime();
     const existingGroup = acc.find(
@@ -257,7 +256,7 @@ function allHoldingsChart(rows, instruments, isRunningFirstTime) {
   }, []);
 
   const labels = groupedData.map((data) => new Date(data.date).toDateString());
-  if (isRunningFirstTime) displayData(groupedData, instruments);
+  if (isRunningFirstTime) displayData(groupedData, instruments, totalCount);
 
   function getPercent(found) {
     if (found) return (100 * found.p_l) / (found.avg_cost * found.qty);
@@ -319,7 +318,7 @@ filterBtn.addEventListener("click", async () => {
   const endDate = document.getElementById("end-date").value;
   if (!startDate || !endDate) return;
   getDataAsPerStartEndDate(startDate, endDate);
-  
+
 });
 
 async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) {
@@ -354,7 +353,20 @@ async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) 
     AND i.is_active = true;`
   );
 
-  if(isRunningFirstTime) {
+  let [instrumentId] = await connection.query(
+    `SELECT i.id FROM holdings as h 
+    INNER JOIN instrument as i 
+    WHERE i.id = h.instrument_id 
+    AND i.is_active = TRUE 
+    ORDER BY date ASC 
+    LIMIT 1`);
+
+
+  let [count] = await connection.query(
+    `SELECT COUNT(id) as count FROM holdings WHERE instrument_id = ${instrumentId[0].id}`
+  );
+
+  if (isRunningFirstTime) {
     let arr = Array(totalInstruments).fill(0);
     backgroundColors = arr.map(() => getRandomColor());
     doughnutChart(allInstruments);
@@ -362,9 +374,8 @@ async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) 
     plChart(allInstruments);
     plValueChart(allInstruments);
   }
- 
-  
-  allHoldingsChart(allRows, allInstruments, isRunningFirstTime)
+
+  allHoldingsChart(allRows, allInstruments, isRunningFirstTime, count[0].count)
 }
 
 // Code for when user select specific date from date traverser input tag
@@ -414,4 +425,6 @@ dateTraverserInput.addEventListener("change", async () => {
   plChart(rows);
   plValueChart(rows);
 });
+
+// code execution starts here
 getDataAsPerStartEndDate(dayjs().subtract(3, 'months').format('YYYY-MM-DD'), dayjs().format('YYYY-MM-DD'), true);
