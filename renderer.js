@@ -259,10 +259,13 @@ fileUploadInput.addEventListener("change", async (event) => {
     download: true,
     complete: function (results) {
       results.data.shift(); //remove first row as it contains labels
-      let data = results.data.filter((arr) => arr.length === 8); //so we can filter out blank array
+      let data = results.data.filter((arr) => arr.length === 9); //so we can filter out blank array
       // replace instrument name to store properly in database
       for (let i = 0; i < data.length; i++) {
-        if (data[i][0].startsWith("SGBJUN")) data[i][0] = "SGBJUNE31";
+        if(data[i][0].startsWith('SGBJUN')) {
+          data[i][0] = 'SGBJUN31';
+        } 
+
         let d = table.find((d) => d.name === data[i][0]);
         data[i][0] = d.id;
       }
@@ -274,19 +277,21 @@ fileUploadInput.addEventListener("change", async (event) => {
         "qty",
         "avg_cost",
         "ltp",
+        "invested",
         "cur_val",
         "p_l",
         "net_chg",
         "day_chg",
       ];
-
       // Build the query for bulk insert
       const insertQuery = `INSERT INTO ${tableName} (${columns.join(
         ", "
-      )}) VALUES ?`;
+      )}) VALUES ? `;
 
       c.query(insertQuery, [data], (err, results) => {
-        if (err) throw err;
+        if (err) {
+          console.log(err);
+          throw err;}
       });
     },
   });
