@@ -38,6 +38,25 @@ baseForm.addEventListener("submit", (event) => {
   document.getElementById("base-form").reset();
 });
 
+const sectorForm = document.getElementById("add-sector-form");
+sectorForm.addEventListener("submit", (event) => {
+  event.preventDefault(); // Prevent the default form submission behavior
+
+  // Get form data
+  const sectorValue = document.getElementById("add-sector").value;
+  // Save form data to MySQL database
+  const query = `INSERT INTO sector (name) VALUES ('${sectorValue}')`;
+  connection.query(query, (err, result) => {
+    if (err) {
+      console.log(err);
+      throw err;
+    }
+  });
+
+  // Reset form
+  document.getElementById("add-sector-form").reset();
+});
+
 const instrumentForm = document.getElementById("instrument-form");
 instrumentForm.addEventListener("submit", (event) => {
   event.preventDefault(); // Prevent the default form submission behavior
@@ -128,6 +147,8 @@ const selectBox = document.getElementById("sector-value");
 const investmentTypeSelectBox = document.getElementById("investment-type-select-value");
 const editSelectBox = document.getElementById("edit-sector-value");
 const editInstrumentBox = document.getElementById("edit-instrument-value");
+const checkbox = document.getElementById('edit-checkbox');
+
 const query = "SELECT id, name FROM sector";
 const investmentTypeQuery = "SELECT id, name FROM investment_types";
 
@@ -155,13 +176,15 @@ connection.query(query, (err, rows) => {
       option.text = row.name;
       editInstrumentBox.appendChild(option);
     });
+    editSelectBox.value = instrumentRows[0].sector_id;
+    checkbox.checked = instrumentRows[0].is_active;
   });
 
 
   editInstrumentBox.addEventListener('change', function () {
     let temp = instrumentRows.find(obj => obj.id == editInstrumentBox.value);
-    const checkbox = document.getElementById('edit-checkbox'); // Replace 'myCheckbox' with your checkbox's ID
     checkbox.checked = temp.is_active;
+    
     editSelectBox.value = temp.sector_id;
   });
 

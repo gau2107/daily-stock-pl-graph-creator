@@ -1,7 +1,7 @@
 <html>
 
 <head>
-  <title>Stock portfolio tracker | Add Investments</title>
+  <title>Stock portfolio tracker | Add Investment</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" />
 </head>
 
@@ -13,6 +13,16 @@
         <label for="investment-value" class="form-label">Investment value</label>
         <input type="number" class="form-control" id="investment-value" required step="0.01" />
       </div>
+      <button type="submit" class="btn btn-dark">Submit</button>
+    </form>
+
+    <h1>Add Sector</h1>
+    <form id="add-sector-form" class="mb-3 col-md-3">
+      <div class="mb-3">
+        <label for="add-sector" class="form-label">Type</label>
+        <input type="text" id="add-sector" class="form-control" />
+      </div>
+
       <button type="submit" class="btn btn-dark">Submit</button>
     </form>
 
@@ -64,6 +74,8 @@
 
       <button type="submit" class="btn btn-dark">Submit</button>
     </form>
+
+
 
     <h1>Add investment scheme</h1>
     <form id="add-investment-scheme-form" class="mb-3 col-md-3">
