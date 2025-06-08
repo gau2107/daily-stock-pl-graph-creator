@@ -9,7 +9,7 @@ dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 let connection;
-async function getData() {
+(async function initConnection() {
   connection = await mysql.createConnection({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -17,7 +17,9 @@ async function getData() {
     password: process.env.DB_PASSWORD,
     database: dbConnectionString,
   });
+})();
 
+async function getData() {
   [rows] = await connection.query(`SELECT h.id, h.net_chg, i.name, DATE_FORMAT(h.date, '%M %Y') AS month_year 
     FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id 
     INNER JOIN ( SELECT DISTINCT DATE_FORMAT(date, '%Y-%m') AS month, 

@@ -10,6 +10,16 @@ dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 let connection;
+(async function initConnection() {
+  connection = await mysql.createConnection({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: dbConnectionString,
+  });
+})();
+
 async function getData(duration, typeOfDuration) {
   Chart.helpers.each(Chart.instances, (chart) => {
     chart.destroy();
@@ -18,13 +28,6 @@ async function getData(duration, typeOfDuration) {
   while (row.firstChild) {
     row.removeChild(row.firstChild);
   }
-  connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: dbConnectionString,
-  });
 
   [rows] = await connection.query(`SELECT
     s.name AS sector_name,

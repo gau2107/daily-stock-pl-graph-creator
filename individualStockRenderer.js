@@ -10,7 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 let connection;
-async function getData(startDate, endDate) {
+(async function initConnection() {
   connection = await mysql.createConnection({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -18,7 +18,9 @@ async function getData(startDate, endDate) {
     password: process.env.DB_PASSWORD,
     database: dbConnectionString,
   });
+})();
 
+async function getData(startDate, endDate) {
   Chart.helpers.each(Chart.instances, function (instance) {
     instance.destroy();
   });
