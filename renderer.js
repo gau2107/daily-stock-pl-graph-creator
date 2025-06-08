@@ -1,13 +1,12 @@
-const mysql = require("mysql2/promise");
-
+const { createConnection } = require("mysql2/promise");
 const { ipcRenderer } = require("electron");
-const Papa = require("papaparse");
-const dotenv = require("dotenv");
-const path = require("path");
+const { parse } = require("papaparse");
+const { config } = require("dotenv");
+const { resolve } = require("path");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
-dotenv.config({ path: path.resolve(__dirname, envFilePath) });
+config({ path: resolve(__dirname, envFilePath) });
 
 const form = document.getElementById("form");
 form.addEventListener("submit", async (event) => {
@@ -19,7 +18,7 @@ form.addEventListener("submit", async (event) => {
   const totalPL = document.getElementById("total-pl-input").value;
   const currentValue = document.getElementById("current-value").value;
   const nifty = document.getElementById("nifty-50").value;
-  const connection = await mysql.createConnection({
+  const connection = await createConnection({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
@@ -37,10 +36,12 @@ form.addEventListener("submit", async (event) => {
 });
 
 let curPageNo = 1;
+let itemsPerPage = 10;
+let data = [];
 
 // Function to display data in the HTML table with pagination
 function displayData(parentData, count) {
-  const itemsPerPage = 10; // Number of items to display per page
+  data = parentData;
   const dataBody = document.getElementById('dataBody');
   const pagination = document.getElementById('pagination');
 
@@ -52,10 +53,8 @@ function displayData(parentData, count) {
   // Function to display a specific page
   function displayPage(pageNumber) {
     curPageNo = pageNumber;
-    let data = JSON.parse(JSON.stringify(parentData))
-
-    dataBody.innerHTML = ''; // Clear the table body
     contributionDiv.innerHTML = ''; // Clear the div body
+    dataBody.innerHTML = ''; // Clear the table body
 
     // Calculate the starting and ending index of the items for the current page
     const startIndex = (pageNumber - 1) * itemsPerPage;
@@ -91,13 +90,11 @@ function displayData(parentData, count) {
             contributionDiv.appendChild(innerDiv);
           }
 
-
           if (key === 'total_pl' || key === 'daily_pl')
             cell.textContent = `₹${data[i][key].toLocaleString("en-IN")}`;
           else
             cell.textContent = data[i][key];
           row.appendChild(cell);
-
         }
       }
 
@@ -114,8 +111,6 @@ function displayData(parentData, count) {
     else if (val > -.66 && val < -.33) return 'medium-low'
     else if (val > -.99 && val < -.66) return 'very-low'
     else if (val < -.99) return 'very-very-low'
-
-
     else return '';
   }
   // Function to create pagination links
@@ -153,7 +148,7 @@ function displayData(parentData, count) {
 
 let connection;
 async function start() {
-  connection = await mysql.createConnection({
+  connection = await createConnection({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
@@ -243,7 +238,7 @@ filterBtn.addEventListener("click", () => {
 
 const fileUploadInput = document.getElementById("holdings");
 fileUploadInput.addEventListener("change", async (event) => {
-  const c = await mysql.createConnection({
+  const c = await createConnection({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
@@ -255,7 +250,7 @@ fileUploadInput.addEventListener("change", async (event) => {
   [table] = await c.query(query);
   let file = event.target.files[0];
   // Parse local CSV file
-  Papa.parse(file, {
+  parse(file, {
     download: true,
     complete: function (results) {
       results.data.shift(); //remove first row as it contains labels
@@ -296,4 +291,8 @@ fileUploadInput.addEventListener("change", async (event) => {
     },
   });
 });
-start();
+
+// Initialize when DOM is loaded
+if (typeof window !== 'undefined') {
+  window.addEventListener('DOMContentLoaded', start);
+}

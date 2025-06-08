@@ -8,8 +8,11 @@ const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 
+let connection;
+let instruments = [];
+let newWindow;
+
 async function createWindow() {
-  let connection, instruments;
   try {
     connection = await mysql.createConnection({
       host: process.env.DB_HOST,
@@ -43,8 +46,13 @@ async function createWindow() {
   });
 
   win.loadFile("index.html");
-  // win.webContents.openDevTools();
-
+  win.webContents.openDevTools();
+// Use the imported menu template
+const menu = Menu.buildFromTemplate(
+  getMenuTemplate(win, createNewWindow, createIndividualStockWindow)
+);
+console.log("Menu template created successfully", menu);
+Menu.setApplicationMenu(menu);
   ipcMain.on("reload-app", async () => {
     try {
       [rows] = await connection.query("SELECT * FROM daily_pl");
@@ -60,9 +68,9 @@ async function createWindow() {
   });
 
   function getCurrentDataForChart(rows) {
+    let data = rows.map((row) => row.current_value);
     let bgColors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, .5)" : "rgba(39, 174, 96, .5)");
     let colors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(39, 174, 96, 1)");
-    let data = rows.map((row) => row.current_value);
     return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
@@ -80,13 +88,13 @@ async function createWindow() {
 
   function getDailyPlDataForChart(rows) {
     const dailyChartData = rows.map((row) => row.daily_pl);
+    const totalProfit = dailyChartData.reduce((sum, val) => sum + val, 0);
+    const totalProfitPercent = ((totalProfit / Math.abs(dailyChartData[0] || 1)) * 100).toFixed(2);
+    
     function colors(opacity) {
-      return rows.map((row) =>
-        row.daily_pl < 0 ? `rgba(255, 110, 100, ${opacity})` : `rgba(0, 125, 10, ${opacity})`
-      );
+      return totalProfit >= 0 ? `rgba(39, 174, 96, ${opacity})` : `rgba(255, 110, 100, ${opacity})`;
     }
-    const totalProfitCounts = rows.filter((r) => r.daily_pl > 0).length;
-    const totalProfitPercent = ((totalProfitCounts * 100) / (rows.length)).toFixed(2);
+    
     return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
@@ -106,25 +114,10 @@ async function createWindow() {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
-          label: "Nifty",
-          data: rows.map(
-            (row) =>
-              ((row.nifty_50 - rows[0].nifty_50) * 100) / rows[0].nifty_50
-          ),
-          borderColor: "rgba(255, 110, 100, 1)",
-          backgroundColor: "rgba(255, 110, 100, .5)",
-          pointStyle: false,
-          tension: .2
-        },
-        {
-          label: "Total P/L",
-          data: rows.map(
-            (row) =>
-              ((row.current_value - rows[0].current_value) * 100) /
-              rows[0].current_value
-          ),
-          borderColor: "rgba(0, 125, 10, 1)",
-          backgroundColor: "rgba(0, 125, 10, .5)",
+          label: "Nifty 50",
+          data: rows.map((row) => row.nifty_50),
+          borderColor: "rgba(54, 162, 235, 1)",
+          backgroundColor: "rgba(54, 162, 235, 0.2)",
           pointStyle: false,
           tension: .2
         },
@@ -383,7 +376,7 @@ async function createWindow() {
 
   // Helper functions for menu actions
   function createNewWindow(file = "add.html") {
-    let newWindow = new BrowserWindow({
+    newWindow = new BrowserWindow({
       width: 600,
       height: 500,
       webPreferences: {
@@ -413,12 +406,6 @@ async function createWindow() {
     individualStockWindow.maximize();
     return individualStockWindow;
   }
-
-  // Use the imported menu template
-  const menu = Menu.buildFromTemplate(
-    getMenuTemplate(win, createNewWindow, createIndividualStockWindow)
-  );
-  Menu.setApplicationMenu(menu);
 }
 
 app.whenReady().then(() => {
