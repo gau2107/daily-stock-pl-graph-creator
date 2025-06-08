@@ -1,5 +1,6 @@
 {
-  "name": "stock-portfolio-tracker",
+  "name": "Stock Portfolio Tracker",
+  "productName": "Stock Portfolio Tracker",
   "version": "1.0.0",
   "description": "App that tracks your daily stock profit / loss with interactive ui",
   "main": "main.js",
