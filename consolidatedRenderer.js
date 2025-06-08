@@ -14,9 +14,10 @@ const dbConnectionString = process.env.DB_CONNECTION_STRING;
 let connection;
 async function getData() {
   let newConnection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     database: dbConnectionString,
   });
   let [rows] = await newConnection.query(`SELECT c.id, t.name as investment_type, s.name as investment_scheme, c.invested_value, c.current_value, c.date, c.p_l 
@@ -284,9 +285,10 @@ form.addEventListener("submit", async (event) => {
   const currentValue = document.getElementById("valuation").value;
   const pL = currentValue - investedValue;
   connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     database: dbConnectionString,
   });
 

@@ -6,14 +6,14 @@ const path = require("path");
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
-const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 // Replace the connection details with your own
 const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: dbConnectionString,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
 
 const baseForm = document.getElementById("base-form");

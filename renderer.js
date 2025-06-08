@@ -22,9 +22,10 @@ form.addEventListener("submit", async (event) => {
   const currentValue = document.getElementById("current-value").value;
   const nifty = document.getElementById("nifty-50").value;
   const connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     database: dbConnectionString,
   });
 
@@ -155,9 +156,10 @@ function displayData(parentData, count) {
 let connection;
 async function start() {
   connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     database: dbConnectionString,
   });
 
@@ -245,9 +247,10 @@ filterBtn.addEventListener("click", () => {
 const fileUploadInput = document.getElementById("holdings");
 fileUploadInput.addEventListener("change", async (event) => {
   const c = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     database: dbConnectionString,
   });
   let table;

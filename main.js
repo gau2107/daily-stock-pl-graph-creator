@@ -6,17 +6,23 @@ const dotenv = require("dotenv");
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
-const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 async function createWindow() {
-  const connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: dbConnectionString,
-  });
-  [instruments] = await connection.query("SELECT * from instrument where is_active = true");
+  try {
+    const connection = await mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    });
+    [instruments] = await connection.query("SELECT * from instrument where is_active = true");
 
+  } catch (error) {
+    console.error("Error connecting to the database:", error);
+    return;
+  }
+  
   const win = new BrowserWindow({
     width: 800,
     height: 600,
