@@ -8,8 +8,6 @@ const path = require("path");
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
-const dbConnectionString = process.env.DB_CONNECTION_STRING;
-// Replace the connection details with your own
 
 const form = document.getElementById("form");
 form.addEventListener("submit", async (event) => {
@@ -22,10 +20,11 @@ form.addEventListener("submit", async (event) => {
   const currentValue = document.getElementById("current-value").value;
   const nifty = document.getElementById("nifty-50").value;
   const connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: dbConnectionString,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
   });
 
   // Save form data to MySQL database
@@ -155,10 +154,11 @@ function displayData(parentData, count) {
 let connection;
 async function start() {
   connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: dbConnectionString,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
   });
 
   loadTable();
@@ -189,8 +189,7 @@ weeklyBtn.addEventListener("click", (event) => {
   Chart.helpers.each(Chart.instances, (chart) => {
     chart.destroy();
   });
-  ipcRenderer.send("weekly-data"); jko
-  vq
+  ipcRenderer.send("weekly-data");
 });
 
 const monthlyBtn = document.getElementById("monthly");
@@ -245,10 +244,11 @@ filterBtn.addEventListener("click", () => {
 const fileUploadInput = document.getElementById("holdings");
 fileUploadInput.addEventListener("change", async (event) => {
   const c = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: dbConnectionString,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
   });
   let table;
   const query = `SELECT * from instrument`;
