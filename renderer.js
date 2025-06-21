@@ -263,11 +263,15 @@ fileUploadInput.addEventListener("change", async (event) => {
 
         let d = table.find((d) => d.name === data[i][0]);
         data[i][0] = d.id;
+        
+        // Add current date at the beginning of each row
+        data[i].unshift(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
       }
 
       const tableName = "holdings";
 
       const columns = [
+        "date",
         "instrument_id",
         "qty",
         "avg_cost",
@@ -276,7 +280,7 @@ fileUploadInput.addEventListener("change", async (event) => {
         "cur_val",
         "p_l",
         "net_chg",
-        "day_chg",
+        "day_chg"
       ];
       // Build the query for bulk insert
       const insertQuery = `INSERT INTO ${tableName} (${columns.join(

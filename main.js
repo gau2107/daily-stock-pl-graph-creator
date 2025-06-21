@@ -51,7 +51,6 @@ async function createWindow() {
 const menu = Menu.buildFromTemplate(
   getMenuTemplate(win, createNewWindow, createIndividualStockWindow)
 );
-console.log("Menu template created successfully", menu);
 Menu.setApplicationMenu(menu);
   ipcMain.on("reload-app", async () => {
     try {

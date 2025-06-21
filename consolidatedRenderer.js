@@ -11,36 +11,89 @@ dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 
 // Replace the connection details with your own
 let connection;
+let connectionPromise;
+
 (async function initConnection() {
-  connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  try {
+    connectionPromise = mysql.createConnection({
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+    });
+    connection = await connectionPromise;
+    console.log("Database connected successfully");
+  } catch (error) {
+    console.error("Database connection failed:", error);
+    connection = null;
+    // Don't show alert immediately, let the user try operations first
+  }
 })();
 
-async function getData() {
-  // Use the shared connection
-  let [rows] = await connection.query(`SELECT c.id, t.name as investment_type, s.name as investment_scheme, c.invested_value, c.current_value, c.date, c.p_l 
-    FROM cumulative_holdings as c INNER JOIN investment_scheme as s ON c.scheme_id = s.id INNER JOIN investment_types as t ON s.investment_type_id = t.id
-    where s.is_active = true ORDER BY c.date`);
+try {
+  // Add connection check before initial getData call
+  if (connectionPromise) {
+    connectionPromise.then(() => {
+      getData();
+    }).catch((error) => {
+      console.error("Error initializing data:", error);
+      alert("Failed to load initial data. Please refresh the page.");
+    });
+  } else {
+    getData();
+  }
+} catch (error) {
+  console.error("Error initializing data:", error);
+  alert("Failed to load initial data. Please refresh the page.");
+}
 
-  // load dropdown with sector values
+async function getData() {
+  let rows, newRows;
+  
+  try {
+    // Wait for connection to be established if it's still pending
+    if (!connection && connectionPromise) {
+      try {
+        connection = await connectionPromise;
+      } catch (error) {
+        console.error("Failed to establish database connection:", error);
+        alert("Database connection failed. Please refresh the page.");
+        return;
+      }
+    }
+    
+    if (!connection) {
+      console.error("No database connection available");
+      alert("Database connection not available. Please refresh the page.");
+      return;
+    }
+
+    [rows] = await connection.query(`SELECT c.id, t.name as investment_type, s.name as investment_scheme, c.invested_value, c.current_value, c.date, c.p_l 
+      FROM cumulative_holdings as c INNER JOIN investment_scheme as s ON c.scheme_id = s.id INNER JOIN investment_types as t ON s.investment_type_id = t.id
+      where s.is_active = true ORDER BY c.date`);
+  } catch (error) {
+    console.error("Database query error for holdings:", error);
+    alert("Failed to fetch holdings data. Please check your connection.");
+    return;
+  }
+
   const investmentTypeSelectBox = document.getElementById("scheme-value");
   const investmentTypeQuery = "SELECT id, name FROM investment_scheme WHERE is_active = true";
 
-  let [newRows] = await connection.query(investmentTypeQuery);
-  // Populate the select box options
-  newRows.forEach((row) => {
-    const option = document.createElement("option");
-    option.value = row.id;
-    option.text = row.name;
-    investmentTypeSelectBox.appendChild(option.cloneNode(true));
-  });
-
-  
+  try {
+    [newRows] = await connection.query(investmentTypeQuery);
+    newRows.forEach((row) => {
+      const option = document.createElement("option");
+      option.value = row.id;
+      option.text = row.name;
+      investmentTypeSelectBox.appendChild(option.cloneNode(true));
+    });
+  } catch (error) {
+    console.error("Database query error for investment schemes:", error);
+    alert("Failed to load investment schemes. Please refresh the page.");
+    return;
+  }
 
   generateChart(rows);
   generatePieChart(rows, newRows.length);
@@ -50,35 +103,6 @@ async function getData() {
     maxLen = schemeArray[i].data.length > maxLen ? schemeArray[i].data.length : maxLen;
     getIndividualChart(schemeArray[i]);
   }
-
-  let [niftyRows] = await connection.query(`SELECT id, date, nifty_50
-    FROM daily_pl
-    JOIN (
-        SELECT MAX(date) AS max_date
-        FROM daily_pl
-        GROUP BY YEAR(date), MONTH(date)
-    ) AS max_dates
-    ON daily_pl.date = max_dates.max_date
-    ORDER BY date`);
-
-    niftyRows.pop();
-    niftyRows = niftyRows.slice(-maxLen-1)
-
-    let newNiftyRows = [];
-
-    let tempFirstValue = niftyRows[0].nifty_50;
-    niftyRows.forEach((data) => {
-
-      let p_l = data.nifty_50 - tempFirstValue;
-      newNiftyRows.push({
-        date: data.date,
-        p_l: p_l,
-        invested_value: tempFirstValue
-      })
-    });
-    newNiftyRows.shift();
-
-  getIndividualChart({title: 'Nifty', data: newNiftyRows});
 }
 
 function generateChart(rows) {
@@ -288,21 +312,32 @@ form.addEventListener("submit", async (event) => {
   const investedValue = document.getElementById("cumulative-value-invested").value;
   const currentValue = document.getElementById("valuation").value;
   const pL = currentValue - investedValue;
-  connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  
+  try {
+    // Wait for connection to be established if it's still pending
+    if (!connection && connectionPromise) {
+      try {
+        connection = await connectionPromise;
+      } catch (error) {
+        console.error("Failed to establish database connection:", error);
+        alert("Database connection failed. Please try again.");
+        return;
+      }
+    }
+    
+    if (!connection) {
+      throw new Error("No database connection available");
+    }
 
-
-  // Save form data to MySQL database
-  const query = `INSERT INTO cumulative_holdings (date, scheme_id, invested_value, current_value, p_l) VALUES ('${date}', ${schemeValue}, ${investedValue}, ${currentValue}, ${pL})`;
-  await connection.query(query);
-
-  // Reset form
-  document.getElementById("form").reset();
+    const query = `INSERT INTO cumulative_holdings (date, scheme_id, invested_value, current_value, p_l) VALUES ('${date}', ${schemeValue}, ${investedValue}, ${currentValue}, ${pL})`;
+    await connection.query(query);
+    
+    alert("Data saved successfully!");
+    document.getElementById("form").reset();
+  } catch (error) {
+    console.error("Database operation failed:", error);
+    alert("Failed to save data. Please try again.");
+  }
 });
 
-getData();
+// Remove the immediate getData() call from here
