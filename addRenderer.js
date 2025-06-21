@@ -1,4 +1,4 @@
-const mysql = require("mysql");
+const mysql = require("mysql2");
 const { ipcRenderer } = require("electron");
 const dotenv = require("dotenv");
 const path = require("path");
@@ -176,16 +176,16 @@ connection.query(query, (err, rows) => {
       option.text = row.name;
       editInstrumentBox.appendChild(option);
     });
-    editSelectBox.value = instrumentRows[0].sector_id;
-    checkbox.checked = instrumentRows[0].is_active;
+    editSelectBox.value = instrumentRows?.[0]?.sector_id;
+    checkbox.checked = instrumentRows?.[0]?.is_active;
   });
 
 
   editInstrumentBox.addEventListener('change', function () {
     let temp = instrumentRows.find(obj => obj.id == editInstrumentBox.value);
-    checkbox.checked = temp.is_active;
+    checkbox.checked = temp?.is_active;
     
-    editSelectBox.value = temp.sector_id;
+    editSelectBox.value = temp?.sector_id;
   });
 
 

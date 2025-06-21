@@ -46,7 +46,7 @@ async function createWindow() {
   });
 
   win.loadFile("index.html");
-  win.webContents.openDevTools();
+  // win.webContents.openDevTools();
 // Use the imported menu template
 const menu = Menu.buildFromTemplate(
   getMenuTemplate(win, createNewWindow, createIndividualStockWindow)
@@ -389,6 +389,7 @@ Menu.setApplicationMenu(menu);
     });
     newWindow.loadFile(file);
     if (file !== "add.html") newWindow.maximize();
+    // newWindow.webContents.openDevTools();
     return newWindow;
   }
 

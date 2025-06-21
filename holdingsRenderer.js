@@ -9,7 +9,6 @@ const { getRandomColor } = require("./src/utils/utils");
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
-const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 let totalInstruments;
 ipcRenderer.send("get-total-instruments");
@@ -331,12 +330,13 @@ async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) 
     }
   });
 
-  const connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: dbConnectionString,
-  });
+  connection = await mysql.createConnection({
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+      });
 
   let [allInstruments] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
@@ -407,10 +407,11 @@ dateTraverserInput.addEventListener("change", async () => {
   });
 
   const connection = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "",
-    database: dbConnectionString,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
   });
 
   [rows] = await connection.query(

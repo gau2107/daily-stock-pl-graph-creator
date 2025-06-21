@@ -7,7 +7,6 @@ const { getRandomColor, colors } = require("./src/utils/utils");
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
-const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 
 // Replace the connection details with your own
@@ -18,7 +17,7 @@ let connection;
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: dbConnectionString,
+    database: process.env.DB_NAME,
   });
 })();
 
@@ -282,5 +281,28 @@ const form = document.getElementById("form");
 form.addEventListener("submit", async (event) => {
   event.preventDefault(); // Prevent the default form submission behavior
 
+  
   // Get form data
-  const date = document.getElementById("datepicker
+  const date = document.getElementById("datepicker").value;
+  const schemeValue = document.getElementById("scheme-value").value;
+  const investedValue = document.getElementById("cumulative-value-invested").value;
+  const currentValue = document.getElementById("valuation").value;
+  const pL = currentValue - investedValue;
+  connection = await mysql.createConnection({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+  });
+
+
+  // Save form data to MySQL database
+  const query = `INSERT INTO cumulative_holdings (date, scheme_id, invested_value, current_value, p_l) VALUES ('${date}', ${schemeValue}, ${investedValue}, ${currentValue}, ${pL})`;
+  await connection.query(query);
+
+  // Reset form
+  document.getElementById("form").reset();
+});
+
+getData();

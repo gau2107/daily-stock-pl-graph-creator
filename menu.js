@@ -8,7 +8,7 @@ function getMenuTemplate(win, createNewWindow, createIndividualStockWindow) {
       submenu: [
         {
           label: "Add Investment",
-          click: createNewWindow("add.html")
+          click: () => createNewWindow("add.html")
         },
         {
           label: "Holdings",

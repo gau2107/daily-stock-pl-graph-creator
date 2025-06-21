@@ -7,7 +7,6 @@ const dayjs = require("dayjs");
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
-const dbConnectionString = process.env.DB_CONNECTION_STRING;
 
 let connection;
 (async function initConnection() {
@@ -16,7 +15,7 @@ let connection;
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: dbConnectionString,
+    database: process.env.DB_NAME,
   });
 })();
 
