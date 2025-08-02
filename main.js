@@ -91,7 +91,9 @@ Menu.setApplicationMenu(menu);
     const totalProfitPercent = ((totalProfit / Math.abs(dailyChartData[0] || 1)) * 100).toFixed(2);
     
     function colors(opacity) {
-      return totalProfit >= 0 ? `rgba(39, 174, 96, ${opacity})` : `rgba(255, 110, 100, ${opacity})`;
+      return rows.map((row) =>
+        row.daily_pl < 0 ? `rgba(255, 110, 100, ${opacity})` : `rgba(0, 125, 10, ${opacity})`
+      );
     }
     
     return {
@@ -113,10 +115,25 @@ Menu.setApplicationMenu(menu);
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
-          label: "Nifty 50",
-          data: rows.map((row) => row.nifty_50),
-          borderColor: "rgba(54, 162, 235, 1)",
-          backgroundColor: "rgba(54, 162, 235, 0.2)",
+          label: "Nifty",
+          data: rows.map(
+            (row) =>
+              ((row.nifty_50 - rows[0].nifty_50) * 100) / rows[0].nifty_50
+          ),
+          borderColor: "rgba(255, 110, 100, 1)",
+          backgroundColor: "rgba(255, 110, 100, .5)",
+          pointStyle: false,
+          tension: .2
+        },
+        {
+          label: "Total P/L",
+          data: rows.map(
+            (row) =>
+              ((row.current_value - rows[0].current_value) * 100) /
+              rows[0].current_value
+          ),
+          borderColor: "rgba(0, 125, 10, 1)",
+          backgroundColor: "rgba(0, 125, 10, .5)",
           pointStyle: false,
           tension: .2
         },
