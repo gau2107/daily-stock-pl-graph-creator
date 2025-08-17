@@ -1,43 +1,18 @@
 const mysql = (typeof require === 'function') ? require('mysql2/promise') : null;
 
+const DEFAULT_DEMO_PORTFOLIO = [
+  { symbol: 'AAPL', shares: 10, costBasis: 1200, currentPrice: 150 },
+  { symbol: 'MSFT', shares: 5, costBasis: 600, currentPrice: 320 },
+  { symbol: 'GOOGL', shares: 2, costBasis: 400, currentPrice: 1400 },
+  { symbol: 'TSLA', shares: 3, costBasis: 1800, currentPrice: 900 },
+  { symbol: 'AMZN', shares: 1, costBasis: 3100, currentPrice: 3500 },
+];
+
 function formatCurrency(n) {
   return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 }
 function formatPct(n) {
   return (n * 100).toFixed(2) + '%';
-}
-
-// Create minimal static markup inside the playground root
-function renderStaticMarkup(root) {
-  root.innerHTML = `
-    <h2>Portfolio playground</h2>
-    <div id="pg-controls" style="margin-bottom:12px">
-      <button id="pg-select-all" class="btn btn-sm btn-outline-primary">Select All</button>
-      <button id="pg-clear" class="btn btn-sm btn-outline-secondary" style="margin-left:8px">Clear</button>
-    </div>
-    <div style="overflow:auto">
-      <table id="pg-table" class="table table-sm" style="min-width:720px;width:100%;">
-        <thead>
-          <tr>
-            <th>Include</th>
-            <th>Symbol</th>
-            <th style="text-align:right">Shares</th>
-            <th style="text-align:right">Cost Basis</th>
-            <th style="text-align:right">Current Price</th>
-            <th style="text-align:right">Current Value</th>
-            <th style="text-align:right">Return</th>
-          </tr>
-        </thead>
-        <tbody id="pg-tbody"></tbody>
-      </table>
-    </div>
-    <div id="pg-summary" style="margin-top:12px">
-      <div><strong>Selected holdings:</strong> <span id="pg-selected-count">0</span></div>
-      <div>Total cost: <span id="pg-total-cost">-</span></div>
-      <div>Total current value: <span id="pg-total-current">-</span></div>
-      <div>Portfolio return: <span id="pg-portfolio-return">-</span></div>
-    </div>
-  `;
 }
 
 // Render rows from a portfolio array
@@ -161,13 +136,14 @@ async function fetchPortfolioFromDB() {
     database: process.env.DB_NAME,
   });
 
-  // Query latest holdings aggregated by instrument. Adapt as needed for your schema.
+  // Query latest snapshot per instrument: return the most recent holding row for each instrument
+  // This gives a single row per active instrument containing current qty, cost basis and ltp.
   const [rows] = await connection.query(
-    `SELECT i.name AS symbol, SUM(h.qty) AS shares, SUM(h.avg_cost * h.qty) AS costBasis, AVG(h.ltp) AS currentPrice
+    `SELECT i.name AS symbol, h.qty AS shares, (h.avg_cost * h.qty) AS costBasis, h.ltp AS currentPrice
      FROM holdings h
      INNER JOIN instrument i ON h.instrument_id = i.id
-     WHERE i.is_active = TRUE
-     GROUP BY i.name`);
+     WHERE h.id IN (SELECT MAX(id) FROM holdings GROUP BY instrument_id)
+       AND i.is_active = TRUE`);
 
   await connection.end();
   return rows.map(r => ({ symbol: r.symbol, shares: Number(r.shares) || 0, costBasis: Number(r.costBasis) || 0, currentPrice: Number(r.currentPrice) || 0 }));
@@ -180,9 +156,8 @@ async function mountPlayground() {
   root.style.maxWidth = '760px';
   root.style.margin = '18px';
 
-  renderStaticMarkup(root);
-
-  let portfolio = [];
+  // Page markup is provided by playground.html; start with demo portfolio as fallback
+  let portfolio = DEFAULT_DEMO_PORTFOLIO.slice();
   try {
     const dbPortfolio = await fetchPortfolioFromDB();
     if (dbPortfolio && dbPortfolio.length) portfolio = dbPortfolio;
