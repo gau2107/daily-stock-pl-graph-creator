@@ -339,5 +339,3 @@ form.addEventListener("submit", async (event) => {
     alert("Failed to save data. Please try again.");
   }
 });
-
-// Remove the immediate getData() call from here
