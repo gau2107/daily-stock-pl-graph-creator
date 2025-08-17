@@ -9,7 +9,8 @@ const envFilePath =
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 
 let connection;
-(async function initConnection() {
+
+async function initConnection() {
   connection = await mysql.createConnection({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
@@ -17,7 +18,7 @@ let connection;
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
   });
-})();
+}
 
 async function getData(startDate, endDate) {
   Chart.helpers.each(Chart.instances, function (instance) {
@@ -38,7 +39,6 @@ async function getData(startDate, endDate) {
       AND h.date < '${endDate.format('YYYY-MM-DD')}' 
       AND i.is_active = true;`
     );
-
   generateDataForChart(rows);
 }
 
@@ -154,4 +154,8 @@ filterBtn.addEventListener("click", async () => {
   getData(dayjs(startDate), dayjs(endDate))
 
 });
-getData(dayjs().subtract(3, 'months'), dayjs());
+
+// Ensure connection is established before calling getData
+initConnection().then(() => {
+  getData(dayjs().subtract(3, 'months'), dayjs());
+});
