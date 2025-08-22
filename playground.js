@@ -266,8 +266,7 @@ async function mountPlayground() {
 
   renderRows(portfolio);
 
-  // Initialize empty charts
-  updateCharts([]);
+  // Charts will be initialized by the recompute() call within renderRows
 }
 
 // Auto-mount
@@ -288,7 +287,30 @@ function updateAllocationChart(holdings) {
   }
 
   if (holdings.length === 0) {
-    allocationChart = null;
+    // Create empty placeholder chart
+    allocationChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['No Data'],
+        datasets: [{
+          data: [1],
+          backgroundColor: ['#e9ecef'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            enabled: false
+          }
+        }
+      }
+    });
     return;
   }
 
@@ -339,7 +361,41 @@ function updatePerformanceChart(holdings) {
   }
 
   if (holdings.length === 0) {
-    performanceChart = null;
+    // Create empty placeholder chart
+    performanceChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['No Data'],
+        datasets: [{
+          label: 'Return %',
+          data: [0],
+          backgroundColor: ['#e9ecef'],
+          borderColor: ['#e9ecef'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            enabled: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            display: false
+          },
+          x: {
+            display: false
+          }
+        }
+      }
+    });
     return;
   }
 
