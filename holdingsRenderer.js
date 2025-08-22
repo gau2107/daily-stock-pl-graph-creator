@@ -349,7 +349,7 @@ async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) 
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
     FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id 
     WHERE h.date > '${dayjs(startDate).format('YYYY-MM-DD')}' 
-    AND h.date < '${dayjs(endDate).format('YYYY-MM-DD')}' 
+    AND h.date <= '${dayjs(endDate).format('YYYY-MM-DD')}' 
     AND i.is_active = true;`
   );
 

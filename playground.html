@@ -6,52 +6,236 @@
   <title>Stock portfolio tracker | Playground</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="./index.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .portfolio-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .metric-card {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-left: 4px solid #667eea;
+    }
+
+    .positive {
+      color: #28a745;
+    }
+
+    .negative {
+      color: #dc3545;
+    }
+
+    .stock-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.75rem;
+    }
+
+    .shares-input {
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      padding: 4px 8px;
+      width: 80px;
+      text-align: right;
+    }
+
+    .shares-input:focus {
+      border-color: #667eea;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .controls-section {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-custom {
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .chart-container {
+      height: 300px;
+      position: relative;
+    }
+
+    .chart-container canvas {
+      max-height: 100% !important;
+    }
+  </style>
 </head>
 
 <body style="background-color: whitesmoke;">
-  <div class="container">
+  <div class="container-fluid px-4">
 
-    <!-- Playground UI -->
-    <div id="playground-root">
-      <h1>Playground</h1>
-
-      <div id="playground" class="mt-3">
-        <div id="pg-header" class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h5">Portfolio playground</h2>
-          <div id="pg-controls">
-            <button id="pg-select-all" class="btn btn-sm btn-outline-primary">Select All</button>
-            <button id="pg-clear" class="btn btn-sm btn-outline-secondary" style="margin-left:8px">Clear</button>
-          </div>
+    <!-- Portfolio Header -->
+    <div class="portfolio-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="mb-1"><i class="bi bi-graph-up me-2"></i>Portfolio Playground</h1>
+          <p class="mb-0 opacity-75">Analyze and optimize your stock holdings</p>
         </div>
-
-        <div style="overflow:auto">
-          <table id="pg-table" class="table table-sm" style="min-width:720px;width:100%;">
-            <thead>
-              <tr>
-                <th>Include</th>
-                <th>Symbol</th>
-                <th style="text-align:right">Shares</th>
-                <th style="text-align:right">Cost Basis</th>
-                <th style="text-align:right">Current Price</th>
-                <th style="text-align:right">Current Value</th>
-                <th style="text-align:right">Return</th>
-              </tr>
-            </thead>
-            <tbody id="pg-tbody"></tbody>
-          </table>
-        </div>
-
-        <div id="pg-summary" style="margin-top:12px">
-          <div><strong>Selected holdings:</strong> <span id="pg-selected-count">0</span></div>
-          <div>Total cost: <span id="pg-total-cost">-</span></div>
-          <div>Total current value: <span id="pg-total-current">-</span></div>
-          <div>Portfolio return: <span id="pg-portfolio-return">-</span></div>
+        <div class="text-end">
+          <div class="h4 mb-0" id="header-total-value">₹0</div>
+          <small class="opacity-75">Total Portfolio Value</small>
         </div>
       </div>
     </div>
-    <script src="playground.js"></script>
+
+    <!-- Controls Section -->
+    <div class="controls-section">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <div class="input-group" style="width: 200px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input id="pg-filter" class="form-control" placeholder="Filter symbols..." />
+            </div>
+            <select id="pg-sort-by" class="form-select" style="width:160px">
+              <option value="symbol">Sort: Symbol</option>
+              <option value="currentValue">Sort: Value</option>
+              <option value="return">Sort: Return %</option>
+            </select>
+            <select id="pg-sort-order" class="form-select" style="width:100px">
+              <option value="desc">Desc</option>
+              <option value="asc">Asc</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="btn-group" role="group">
+            <button id="pg-select-all" class="btn btn-outline-primary btn-custom">
+              <i class="bi bi-check-all me-1"></i>Select All
+            </button>
+            <button id="pg-clear" class="btn btn-outline-secondary btn-custom">
+              <i class="bi bi-x-circle me-1"></i>Clear
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Holdings Table -->
+    <div class="table-container">
+      <div style="overflow-x: auto;">
+        <table id="pg-table" class="table table-hover mb-0" style="min-width:800px;">
+          <thead class="table-light">
+            <tr>
+              <th width="50"></th>
+              <th width="80">Include</th>
+              <th>Symbol</th>
+              <th class="text-end">Shares</th>
+              <th class="text-end">Avg Cost</th>
+              <th class="text-end">Current Price</th>
+              <th class="text-end">Current Value</th>
+              <th class="text-end">Return</th>
+              <th class="text-end">Weight %</th>
+            </tr>
+          </thead>
+          <tbody id="pg-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+      <div class="metric-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-muted mb-1">Selected Holdings</h6>
+            <h4 class="mb-0" id="pg-selected-count">0</h4>
+          </div>
+          <i class="bi bi-collection text-primary fs-2"></i>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-muted mb-1">Total Investment</h6>
+            <h4 class="mb-0" id="pg-total-cost">-</h4>
+          </div>
+          <i class="bi bi-cash-coin text-info fs-2"></i>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-muted mb-1">Current Value</h6>
+            <h4 class="mb-0" id="pg-total-current">-</h4>
+          </div>
+          <i class="bi bi-graph-up text-success fs-2"></i>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-muted mb-1">Portfolio Return</h6>
+            <h4 class="mb-0" id="pg-portfolio-return">-</h4>
+          </div>
+          <i class="bi bi-trophy text-warning fs-2"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="mt-4">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="metric-card">
+            <h6 class="mb-3">Portfolio Allocation</h6>
+            <div class="chart-container">
+              <canvas id="allocation-chart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="metric-card">
+            <h6 class="mb-3">Performance Overview</h6>
+            <div class="chart-container">
+              <canvas id="performance-chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="playground.js"></script>
 </body>
 
 </html>
