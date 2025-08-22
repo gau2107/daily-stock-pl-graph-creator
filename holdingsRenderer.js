@@ -57,9 +57,19 @@ function displayData(parentData, instruments, totalCount) {
       for (let j = 0; j < instruments.length; j++) {
         const content = data[i]['data'].find((d) => d.instrument === instruments[j].instrument);
         const cell = document.createElement('td');
-        cell.textContent = content?.day_chg ? parseFloat(content?.day_chg)?.toFixed(2) + '%' : '-';
-        cell.style.color = content?.day_chg > 0 ? 'green' : 'red';
-        cell.style.backgroundColor = content?.day_chg > 1 ? 'rgba(0, 255, 0, .08)' : content?.day_chg > 0 ? 'rgba(0, 255, 0, .03)' : content?.day_chg < -1 ? 'rgba(255, 0, 0, 0.08)' : 'rgba(255, 0, 0, .03)';
+
+        // Calculate dynamic returns based on previous price
+        let dayChange = 0;
+        if (content && i < data.length - 1) {
+          const previousDayContent = data[i + 1]['data'].find((d) => d.instrument === instruments[j].instrument);
+          if (previousDayContent && previousDayContent.ltp && content.ltp) {
+            dayChange = ((content.ltp - previousDayContent.ltp) / previousDayContent.ltp) * 100;
+          }
+        }
+
+        cell.textContent = content && dayChange !== 0 ? dayChange.toFixed(2) + '%' : '-';
+        cell.style.color = dayChange > 0 ? 'green' : 'red';
+        cell.style.backgroundColor = dayChange > 1 ? 'rgba(0, 255, 0, .08)' : dayChange > 0 ? 'rgba(0, 255, 0, .03)' : dayChange < -1 ? 'rgba(255, 0, 0, 0.08)' : 'rgba(255, 0, 0, .03)';
         row.appendChild(cell);
       }
 
@@ -331,12 +341,12 @@ async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) 
   });
 
   connection = await mysql.createConnection({
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-      });
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+  });
 
   let [allInstruments] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
