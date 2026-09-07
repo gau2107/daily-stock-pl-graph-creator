@@ -1,21 +1,15 @@
-const mysql = require("mysql2/promise");
+const { createTursoClient } = require("./src/db/turso");
 const dotenv = require("dotenv");
 const path = require("path");
 const dayjs = require("dayjs");
 
-const { ipcRenderer } = require("electron");
 const { getRandomColor } = require("./src/utils/utils");
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
 dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 
-let totalInstruments;
-ipcRenderer.send("get-total-instruments");
-
-ipcRenderer.on("total-instruments", (event, data) => {
-  totalInstruments = data;
-});
+let totalInstruments = 0;
 let backgroundColors;
 
 // table data
@@ -362,18 +356,12 @@ async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) 
     }
   });
 
-  connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  connection = await createTursoClient();
 
   let [allInstruments] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
       i.name AS instrument, i.sector_id, i.id as instrumentId FROM holdings AS h INNER JOIN instrument AS i ON
-      h.instrument_id = i.id WHERE i.is_active = true ORDER BY id DESC LIMIT ${totalInstruments};`
+      h.instrument_id = i.id WHERE i.is_active = true ORDER BY h.id DESC LIMIT ${totalInstruments};`
   );
 
   allInstruments = allInstruments.sort((a, b) => a.instrumentId - b.instrumentId);
@@ -438,19 +426,13 @@ dateTraverserInput.addEventListener("change", async () => {
     }
   });
 
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  const connection = await createTursoClient();
 
   [rows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
       i.name AS instrument, i.sector_id, i.id as instrumentId FROM holdings AS h INNER JOIN instrument AS i ON
       h.instrument_id = i.id WHERE i.is_active = true AND h.date = '${filterDate}'
-      ORDER BY id DESC;`
+      ORDER BY h.id DESC;`
   );
   rows = rows.sort((a, b) => a.instrumentId - b.instrumentId);
   doughnutChart(rows);
@@ -459,5 +441,22 @@ dateTraverserInput.addEventListener("change", async () => {
   plValueChart(rows);
 });
 
-// code execution starts here
-getDataAsPerStartEndDate(dayjs().subtract(3, 'months').format('YYYY-MM-DD'), dayjs().format('YYYY-MM-DD'), true);
+// Code execution starts here. Load the instrument count before building queries
+// that use it for pagination.
+(async function initializeHoldings() {
+  try {
+    const connection = await createTursoClient();
+    const [instrumentCount] = await connection.query(
+      "SELECT COUNT(*) AS count FROM instrument WHERE is_active = true"
+    );
+    totalInstruments = Number(instrumentCount[0]?.count || 0);
+
+    await getDataAsPerStartEndDate(
+      dayjs().subtract(3, "months").format("YYYY-MM-DD"),
+      dayjs().format("YYYY-MM-DD"),
+      true
+    );
+  } catch (error) {
+    console.error("Failed to initialize holdings page:", error);
+  }
+})();

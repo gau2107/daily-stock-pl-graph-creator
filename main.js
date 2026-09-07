@@ -1,6 +1,6 @@
 const dayjs = require("dayjs");
 const { app, BrowserWindow, Menu, shell, ipcMain } = require("electron");
-const mysql = require("mysql2/promise");
+const { createTursoClient } = require("./src/db/turso");
 const path = require("path");
 const dotenv = require("dotenv");
 const { getMenuTemplate } = require("./menu");
@@ -14,13 +14,7 @@ let newWindow;
 
 async function createWindow() {
   try {
-    connection = await mysql.createConnection({
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-    });
+    connection = await createTursoClient();
     [instruments] = await connection.query("SELECT * from instrument where is_active = true");
   } catch (error) {
     console.error("Error connecting to the database:", error);
@@ -364,7 +358,7 @@ Menu.setApplicationMenu(menu);
     try {
       win.webContents.executeJavaScript(`
       ctx = document.getElementById('current-chart').getContext('2d');
-      new Chart(ctx, {
+      void new Chart(ctx, {
         type: 'line',
         data: ${JSON.stringify(getCurrentDataForChart(rows))}
       });
@@ -372,7 +366,7 @@ Menu.setApplicationMenu(menu);
 
       win.webContents.executeJavaScript(`
       ctx2 = document.getElementById('daily-chart').getContext('2d');
-      new Chart(ctx2, {
+      void new Chart(ctx2, {
         type: 'bar',
         data: ${JSON.stringify(getDailyPlDataForChart(rows))}
       });
@@ -380,7 +374,7 @@ Menu.setApplicationMenu(menu);
 
       win.webContents.executeJavaScript(`
       ctx3 = document.getElementById('nifty-chart').getContext('2d');
-      new Chart(ctx3, {
+      void new Chart(ctx3, {
         type: 'line',
         data: ${JSON.stringify(getNiftyDataForChart(rows))},
       });

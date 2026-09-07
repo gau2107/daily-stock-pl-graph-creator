@@ -1,4 +1,4 @@
-const { createConnection } = require("mysql2/promise");
+const { createTursoClient } = require("./src/db/turso");
 const { ipcRenderer } = require("electron");
 const { parse } = require("papaparse");
 const { config } = require("dotenv");
@@ -18,13 +18,7 @@ form.addEventListener("submit", async (event) => {
   const totalPL = document.getElementById("total-pl-input").value;
   const currentValue = document.getElementById("current-value").value;
   const nifty = document.getElementById("nifty-50").value;
-  const connection = await createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  const connection = await createTursoClient();
 
   // Save form data to MySQL database
   const query = `INSERT INTO daily_pl (date, daily_pl, total_pl, current_value, nifty_50) VALUES ('${date}', ${dailyPL}, ${totalPL}, ${currentValue}, ${nifty})`;
@@ -151,13 +145,7 @@ function displayData(parentData, count) {
 
 let connection;
 async function start() {
-  connection = await createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  connection = await createTursoClient();
 
   loadTable();
   ipcRenderer.send("quarterly-data");
@@ -241,13 +229,7 @@ filterBtn.addEventListener("click", () => {
 
 const fileUploadInput = document.getElementById("holdings");
 fileUploadInput.addEventListener("change", async (event) => {
-  const c = await createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  const c = await createTursoClient();
   let table;
   const query = `SELECT * from instrument`;
   [table] = await c.query(query);

@@ -1,4 +1,4 @@
-const mysql = require("mysql2/promise");
+const { createTursoClient } = require("./src/db/turso");
 const dotenv = require("dotenv");
 const path = require("path");
 const dayjs = require("dayjs");
@@ -18,13 +18,7 @@ const colorFor = (value) => number(value) >= 0 ? "#087f23" : "#dc3545";
 
 function createConnection() {
   if (!connectionPromise) {
-    connectionPromise = mysql.createConnection({
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-    });
+    connectionPromise = Promise.resolve(createTursoClient());
   }
   return connectionPromise;
 }

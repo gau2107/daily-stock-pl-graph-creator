@@ -1,4 +1,4 @@
-const mysql = (typeof require === 'function') ? require('mysql2/promise') : null;
+const { createTursoClient } = (typeof require === 'function') ? require('./src/db/turso') : {};
 
 const DEFAULT_DEMO_PORTFOLIO = [
   { symbol: 'AAPL', shares: 10, costBasis: 1200, currentPrice: 150 },
@@ -219,20 +219,14 @@ function renderRows(portfolio) {
 
 // Fetch portfolio from DB similar to other renderer files. Returns array of {symbol, shares, costBasis, currentPrice}
 async function fetchPortfolioFromDB() {
-  if (!mysql) throw new Error('mysql not available');
+  if (!createTursoClient) throw new Error('Turso client not available');
   // Try to connect using env variables if available. This mirrors other renderers.
   const dotenv = require('dotenv');
   const path = require('path');
   const envFilePath = process.env.NODE_ENV === 'development' ? '.env.local' : '.env.production';
   dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 
-  const connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  const connection = await createTursoClient();
 
   // Query latest snapshot per instrument: return the most recent holding row for each instrument
   // This gives a single row per active instrument containing current qty, cost basis and ltp.

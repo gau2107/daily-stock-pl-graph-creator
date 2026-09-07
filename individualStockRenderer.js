@@ -1,4 +1,4 @@
-const mysql = require("mysql2/promise");
+const { createTursoClient } = require("./src/db/turso");
 const dotenv = require("dotenv");
 const path = require("path");
 const dayjs = require("dayjs");
@@ -11,13 +11,7 @@ dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 let connection;
 
 async function initConnection() {
-  connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
+  connection = await createTursoClient();
 }
 
 async function getData(startDate, endDate) {
