@@ -3,19 +3,31 @@
 <head>
   <title>Stock portfolio tracker | Statistics</title>
   <link rel="stylesheet" href="./assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="./assets/css/bootstrap-icons.css" />
   <link rel="stylesheet" href="./index.css" />
-  <script src="./assets/js/chart.min.js"></script>
 </head>
 
 <body>
-  <div id="container" class="container">
-    <h1>Statistics</h1>
-    <div class="btn-group fr">
-      <button type="button" class="btn btn-secondary rounded mr-10" id="weekly">Weekly</button>
-      <button type="button" class="btn btn-secondary rounded mr-10" id="monthly">Monthly</button>
-      <button type="button" class="btn btn-dark rounded mr-10" id="quarterly">Quarterly</button>
-      <button type="button" class="btn btn-secondary rounded mr-10" id="yearly">Yearly</button>
-      <button type="button" class="btn btn-secondary rounded" id="all">All</button>
+  <div id="container" class="container py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+      <div><h1 class="mb-1">Holdings analysis</h1><p class="text-muted mb-0" id="period-label">Live stock-level overview</p></div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span class="text-muted small" id="last-refreshed">Waiting for data...</span>
+    </div>
+    <div id="loading" class="alert alert-secondary">Loading portfolio data...</div>
+    <div id="error" class="alert alert-danger d-none"></div>
+    <div id="statistics-content" class="d-none">
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Current value</div><div class="h4 mb-0" id="current-value">—</div></div></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total invested</div><div class="h4 mb-0" id="total-invested">—</div><div class="small" id="period-return-percent">Changes shown in the table</div></div></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Total P/L</div><div class="h4 mb-0" id="total-profit">—</div><div class="small text-muted" id="total-profit-percent"></div></div></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="card h-100"><div class="card-body"><div class="text-muted small">Active holdings</div><div class="h4 mb-0" id="holding-count">—</div><div class="small text-muted" id="observations">—</div></div></div></div>
+      </div>
+      <div class="card mb-4"><div class="card-body"><h5 class="card-title">What stands out</h5><div id="insights" class="row g-3"></div></div></div>
+      <div class="card mb-4"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><h5 class="card-title mb-1">All holdings</h5><span class="small text-muted">Period changes use stock price history; quantity changes do not affect them</span></div><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Instrument</th><th>Held since</th><th class="text-end">Current value</th><th class="text-end">P/L</th><th class="text-end">Day</th><th class="text-end">Week</th><th class="text-end">Month</th><th class="text-end">Quarter</th><th class="text-end">Half-year</th><th class="text-end">Year</th></tr></thead><tbody id="holdings-body"></tbody></table></div></div></div>
+      <div class="card mb-4"><div class="card-body"><h5 class="card-title">Held for more than one year</h5><p class="small text-muted">Stocks with at least 365 days between their first and latest recorded snapshots.</p><div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Instrument</th><th>Held since</th><th>Holding age</th><th class="text-end">Current value</th><th class="text-end">P/L</th><th class="text-end">Return</th><th class="text-end">Year change</th></tr></thead><tbody id="long-term-body"></tbody></table></div></div></div>
+      <div class="card mb-4"><div class="card-body"><div class="d-flex justify-content-between align-items-center"><div><h5 class="card-title mb-1">Risk analysis</h5><p class="small text-muted mb-0">Risk is estimated from recorded price history. Volatility is annualised; beta and Nifty returns use each stock's own recorded start and end dates.</p></div><span class="small text-muted">Lower risk is not a guarantee</span></div><div class="table-responsive mt-3"><table class="table table-sm align-middle mb-0"><thead><tr><th>Instrument</th><th>Risk</th><th class="text-end">Volatility</th><th class="text-end">Max drawdown</th><th class="text-end">Beta</th><th class="text-end">Stock return</th><th class="text-end">Nifty return</th><th class="text-end">Vs Nifty</th><th>Signal</th></tr></thead><tbody id="risk-body"></tbody></table></div></div></div>
     </div>
   </div>
   <script src="statisticsRenderer.js"></script>

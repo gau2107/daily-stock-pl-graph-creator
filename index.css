@@ -54,6 +54,14 @@
   margin-right: 10px;
 }
 
+.chart-container {
+  min-height: 320px;
+}
+
+.chart-container canvas {
+  max-height: 260px;
+}
+
 /* Target the scrollbar track */
 ::-webkit-scrollbar {
   width: 6px; /* Width of the scrollbar */

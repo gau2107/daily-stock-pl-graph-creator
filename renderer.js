@@ -66,6 +66,7 @@ function displayData(parentData, count) {
 
       let niftyPercent = parseFloat((data[i]?.nifty_50 - data[i + 1]?.nifty_50 || 0) * 100 / data[i + 1]?.nifty_50 || 1);
       let dailyPercent = (data[i]?.current_value - data[i + 1]?.current_value || 0) * 100 / data[i + 1]?.current_value || 1;
+      const totalPercent = data[i]?.current_value ? (data[i]?.total_pl * 100) / data[i]?.current_value : 0;
 
       // Loop through each key in the object
       for (const key in data[i]) {
@@ -90,8 +91,10 @@ function displayData(parentData, count) {
             contributionDiv.appendChild(innerDiv);
           }
 
-          if (key === 'total_pl' || key === 'daily_pl')
-            cell.textContent = `₹${data[i][key].toLocaleString("en-IN")}`;
+          if (key === 'daily_pl')
+            cell.textContent = `₹${data[i][key].toLocaleString("en-IN")} (${dailyPercent.toFixed(2)}%)`;
+          else if (key === 'total_pl')
+            cell.textContent = `₹${data[i][key].toLocaleString("en-IN")} (${totalPercent.toFixed(2)}%)`;
           else
             cell.textContent = data[i][key];
           row.appendChild(cell);

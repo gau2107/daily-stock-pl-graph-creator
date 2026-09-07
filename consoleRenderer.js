@@ -316,18 +316,21 @@ function compareChart(sectorGroupArray) {
     const investedValues = sectorGroupArray.map(
       (item) => item.invested_val
     );
+    const totalInvested = investedValues.reduce((sum, value) => sum + parseFloat(value || 0), 0);
+    const totalCurrent = currentValues.reduce((sum, value) => sum + parseFloat(value || 0), 0);
+    const totalReturn = totalInvested ? ((totalCurrent - totalInvested) * 100 / totalInvested).toFixed(2) : "0.00";
     const data = {
       labels: labels,
       datasets: [
         {
-          label: "Invested value",
+          label: `Invested value (${totalInvested.toFixed(2)})`,
           data: investedValues,
           backgroundColor: "rgba(41, 128, 185, .5)",
           borderColor: "rgba(41, 128, 185, 1)",
           borderWidth: 1,
         },
         {
-          label: "Current value",
+          label: `Current value (${totalCurrent.toFixed(2)}; ${totalReturn}%)`,
           data: currentValues,
           backgroundColor: "rgba(39, 174, 96, .5)",
           borderColor: "rgba(39, 174, 96, 1)",

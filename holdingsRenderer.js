@@ -129,6 +129,15 @@ function doughnutChart(rows) {
         legend: {
           position: "top",
         },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const value = parseFloat(context.raw || 0);
+              const total = context.dataset.data.reduce((sum, item) => sum + parseFloat(item || 0), 0);
+              return `${context.label}: ${value.toFixed(2)} (${total ? (value * 100 / total).toFixed(2) : "0.00"}%)`;
+            },
+          },
+        },
         title: {
           display: true,
           text: "Holdings",
@@ -144,19 +153,22 @@ function doughnutChart(rows) {
 function compareChart(rows) {
   const labels = rows.map((item) => item.instrument);
   const currentValues = rows.map((item) => item.cur_val);
-  const investedValues = rows.map((item) => item.avg_cost * item.qty);
+  const investedValues = rows.map((item) => item.cur_val - item.p_l);
+  const totalInvested = investedValues.reduce((sum, value) => sum + parseFloat(value || 0), 0);
+  const totalCurrent = currentValues.reduce((sum, value) => sum + parseFloat(value || 0), 0);
+  const totalReturn = totalInvested ? ((totalCurrent - totalInvested) * 100 / totalInvested).toFixed(2) : "0.00";
   const data = {
     labels: labels,
     datasets: [
       {
-        label: `Invested value ${investedValues.reduce((i, j) => i + j, 0).toFixed(2)}`,
+        label: `Invested value ${totalInvested.toFixed(2)}`,
         data: investedValues,
         backgroundColor: "rgba(41, 128, 185, .5)",
         borderColor: "rgba(41, 128, 185, 1)",
         borderWidth: 1,
       },
       {
-        label: `Current value ${(currentValues.reduce((i, j) => parseFloat(i) + parseFloat(j), 0)).toFixed(2)}`,
+        label: `Current value ${totalCurrent.toFixed(2)} (${totalReturn}%)`,
         data: currentValues,
         backgroundColor: "rgba(39, 174, 96, .5)",
         borderColor: "rgba(39, 174, 96, 1)",
@@ -183,7 +195,7 @@ function compareChart(rows) {
 function plChart(rows) {
   const labels = rows.map((item) => item.instrument);
   const values = rows.map(
-    (item) => (100 * item.p_l) / (item.avg_cost * item.qty)
+    (item) => (100 * item.p_l) / (item.cur_val - item.p_l || 1)
   );
   const colors = values.map((row) =>
     row < 0 ? "rgba(255, 110, 100, .5)" : "rgba(0, 125, 10, .5)"
@@ -218,7 +230,7 @@ function plChart(rows) {
 
 function plValueChart(rows) {
   const labels = rows.map((item) => item.instrument);
-  const values = rows.map((item) => item.cur_val - item.avg_cost * item.qty);
+  const values = rows.map((item) => item.p_l);
   const colors = values.map((row) =>
     row < 0 ? "rgba(255, 110, 100, .5)" : "rgba(0, 125, 10, .5)"
   );
@@ -242,6 +254,16 @@ function plValueChart(rows) {
       plugins: {
         legend: {
           position: "top",
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const row = rows[context.dataIndex];
+              const invested = parseFloat(row.cur_val || 0) - parseFloat(row.p_l || 0);
+              const percentage = invested ? (parseFloat(row.p_l || 0) * 100 / invested).toFixed(2) : "0.00";
+              return `${context.label}: ${parseFloat(context.raw || 0).toFixed(2)} (${percentage}%)`;
+            },
+          },
         },
       },
     },
@@ -268,7 +290,7 @@ function allHoldingsChart(rows, instruments, isRunningFirstTime, totalCount) {
   if (isRunningFirstTime) displayData(groupedData, instruments, totalCount);
 
   function getPercent(found) {
-    if (found) return (100 * found.p_l) / (found.avg_cost * found.qty);
+    if (found) return (100 * found.p_l) / (found.cur_val - found.p_l || 1);
     else return undefined;
   }
   function generateDataSets(type, label, hidden) {

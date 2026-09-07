@@ -108,7 +108,7 @@ async function getData() {
 function generateChart(rows) {
   rows = groupedByMonth(rows);
   let labels = rows.map(r => dayjs(r.month).format(`MMM YYYY`));
-  let values = rows.map(r => ((r.totalProfitValue * 100) / r.totalInvestedValue).toFixed(2));
+  let values = rows.map(r => ((r.totalProfitValue * 100) / (r.totalInvestedValue || 1)).toFixed(2));
   const data = {
     labels: labels,
     datasets: [
@@ -198,6 +198,8 @@ function generatePieChart(rows, totalInvestmentSchemes) {
     bgColors.push("black");
   }
   let totalCurrentValue = currentValues.reduce((sum, item) => sum + item, 0);
+  let totalCurrentProfit = elements.reduce((sum, item) => sum + Number(item.p_l || 0), 0);
+  let totalCurrentReturn = totalCurrentValue - totalCurrentProfit ? (totalCurrentProfit * 100 / (totalCurrentValue - totalCurrentProfit)).toFixed(2) : "0.00";
   const currentChartData = {
     labels: labels,
     datasets: [
@@ -219,7 +221,7 @@ function generatePieChart(rows, totalInvestmentSchemes) {
       plugins: {
         title: {
           display: true,
-          text: `Current Value ₹${totalCurrentValue.toLocaleString("en-IN")}`
+          text: `Current Value ₹${totalCurrentValue.toLocaleString("en-IN")} (${totalCurrentReturn}%)`
         },
         legend: {
           position: "bottom",
@@ -250,7 +252,7 @@ function generatePieChart(rows, totalInvestmentSchemes) {
       plugins: {
         title: {
           display: true,
-          text: `Invested Value ₹${totalInvestedValue.toLocaleString("en-IN")}`
+          text: `Invested Value ₹${totalInvestedValue.toLocaleString("en-IN")} (return ${totalCurrentReturn}%)`
         },
         legend: {
           position: "bottom",

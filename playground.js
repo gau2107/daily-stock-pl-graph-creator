@@ -106,7 +106,7 @@ function renderRows(portfolio) {
     // Current value cell
     const curValTd = document.createElement('td');
     curValTd.className = 'text-end fw-bold';
-    curValTd.textContent = formatCurrency(p.currentValue);
+    curValTd.textContent = `${formatCurrency(p.currentValue)} (${formatPct(p.returnPct)})`;
     tr.appendChild(curValTd);
 
     // Return cell with color coding
@@ -141,8 +141,8 @@ function renderRows(portfolio) {
 
       // Update current value and return
       const newCurValue = portfolio[i].currentPrice * newShares;
-      curValTd.textContent = formatCurrency(newCurValue);
       const newReturnPct = portfolio[i].costBasis === 0 ? 0 : (newCurValue - portfolio[i].costBasis) / portfolio[i].costBasis;
+      curValTd.textContent = `${formatCurrency(newCurValue)} (${formatPct(newReturnPct)})`;
       const returnClass = newReturnPct >= 0 ? 'positive' : 'negative';
       const returnIcon = newReturnPct >= 0 ? '↗' : '↘';
       retTd.innerHTML = `<span class="${returnClass}">${returnIcon} ${formatPct(newReturnPct)}</span>`;
