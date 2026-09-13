@@ -35,6 +35,27 @@ async function getData() {
   return { rows, benchmarkRows };
 }
 
+function normalizeSplitHistory(history) {
+  let splitEvents = 0;
+  for (let index = 1; index < history.length; index += 1) {
+    const previous = history[index - 1];
+    const current = history[index];
+    if (!previous.ltp || !current.ltp || !previous.qty || !current.qty) continue;
+    const priceRatio = current.ltp / previous.ltp;
+    const quantityRatio = current.qty / previous.qty;
+    const combinedRatio = priceRatio * quantityRatio;
+    const looksLikeSplit = Math.abs(Math.log(combinedRatio)) < Math.log(1.35)
+      && ((quantityRatio >= 1.5 && priceRatio <= 0.8) || (quantityRatio <= 0.67 && priceRatio >= 1.5));
+    if (!looksLikeSplit) continue;
+
+    for (let priorIndex = 0; priorIndex < index; priorIndex += 1) {
+      history[priorIndex].ltp *= priceRatio;
+    }
+    splitEvents += 1;
+  }
+  return splitEvents;
+}
+
 function groupHoldings(rows) {
   const grouped = new Map();
   rows.forEach((row) => {
@@ -42,9 +63,10 @@ function groupHoldings(rows) {
     grouped.get(row.instrument_id).push({ ...row, date: dayjs(row.date), cur_val: number(row.cur_val), p_l: number(row.p_l), qty: number(row.qty), avg_cost: number(row.avg_cost), ltp: number(row.ltp) });
   });
   return [...grouped.values()].map((history) => {
+    const splitEvents = normalizeSplitHistory(history);
     const latest = history[history.length - 1];
     const first = history[0];
-    return { instrument: latest.instrument, sector: latest.sector || "Unclassified", history, latest, first };
+    return { instrument: latest.instrument, sector: latest.sector || "Unclassified", history, latest, first, splitEvents };
   });
 }
 
@@ -166,23 +188,40 @@ function insightCard(title, text, tone = "secondary") {
 }
 
 function renderInsights(holdings) {
+  if (!holdings.length) {
+    document.getElementById("insights").innerHTML = '<div class="text-muted">Not enough holding history to generate insights.</div>';
+    return;
+  }
   const bestMomentum = [...holdings].sort((a, b) => (b.changes.month?.percent || -Infinity) - (a.changes.month?.percent || -Infinity))[0];
   const bestOverall = [...holdings].sort((a, b) => (b.changes.all?.percent || -Infinity) - (a.changes.all?.percent || -Infinity))[0];
-  const review = holdings.find((holding) => actionFor(holding).tone === "danger");
-  const addCandidate = holdings.find((holding) => actionFor(holding).tone === "success");
+  const review = holdings.find((holding) => actionFor(holding).tone === "danger") || holdings[0];
+  const addCandidate = holdings.find((holding) => actionFor(holding).tone === "success") || holdings[0];
   const sectorTotals = new Map();
   holdings.forEach((holding) => sectorTotals.set(holding.sector, (sectorTotals.get(holding.sector) || 0) + holding.latest.cur_val));
   const largestSector = [...sectorTotals.entries()].sort((a, b) => b[1] - a[1])[0];
   const highRisk = holdings.filter((holding) => holding.risk.level === "High").length;
   const rising = holdings.filter((holding) => holding.changes.month?.percent > 0).length;
+  const largestPosition = [...holdings].sort((a, b) => b.latest.cur_val - a.latest.cur_val)[0];
+  const largestProfit = [...holdings].sort((a, b) => b.latest.p_l - a.latest.p_l)[0];
+  const longestHeld = [...holdings].sort((a, b) => b.heldDays - a.heldDays)[0];
+  const strongestRelative = [...holdings].filter((holding) => holding.risk.relative !== null).sort((a, b) => b.risk.relative - a.risk.relative)[0];
+  const deepestDrawdown = [...holdings].sort((a, b) => a.risk.maxDrawdown - b.risk.maxDrawdown)[0];
+  const mostVolatile = [...holdings].sort((a, b) => b.risk.volatility - a.risk.volatility)[0];
   const html = [
     bestMomentum?.changes.month ? insightCard("Best monthly momentum", `${bestMomentum.instrument} · ${bestMomentum.changes.month.percent.toFixed(2)}%`, "success") : "",
     bestOverall?.changes.all ? insightCard("Best since first record", `${bestOverall.instrument} · ${bestOverall.changes.all.percent.toFixed(2)}%`, "success") : "",
-    addCandidate ? insightCard("Potential add", `${addCandidate.instrument} · ${actionFor(addCandidate).detail}`, "success") : "",
-    review ? insightCard("Needs review", `${review.instrument} · ${actionFor(review).detail}`, "danger") : "",
+    insightCard("Potential add", `${addCandidate.instrument} · ${actionFor(addCandidate).detail}`, "success"),
+    insightCard("Needs review", `${review.instrument} · ${actionFor(review).detail}`, "danger"),
     largestSector ? insightCard("Largest sector exposure", `${largestSector[0]} · ${formatMoney(largestSector[1])}`, "info") : "",
     insightCard("Monthly breadth", `${rising} of ${holdings.length} holdings rising`, rising >= holdings.length / 2 ? "success" : "warning"),
     insightCard("High-risk holdings", `${highRisk} requiring closer monitoring`, highRisk ? "warning" : "success"),
+    largestPosition ? insightCard("Largest position", `${largestPosition.instrument} · ${formatMoney(largestPosition.latest.cur_val)}`, "info") : "",
+    largestProfit ? insightCard("Largest P/L contribution", `${largestProfit.instrument} · ${formatMoney(largestProfit.latest.p_l)}`, largestProfit.latest.p_l >= 0 ? "success" : "danger") : "",
+    longestHeld ? insightCard("Longest held", `${longestHeld.instrument} · ${longestHeld.heldDays} days`, "primary") : "",
+    strongestRelative ? insightCard("Best vs Nifty", `${strongestRelative.instrument} · ${strongestRelative.risk.relative >= 0 ? "+" : ""}${strongestRelative.risk.relative.toFixed(2)} points`, "success") : "",
+    deepestDrawdown ? insightCard("Deepest drawdown", `${deepestDrawdown.instrument} · ${deepestDrawdown.risk.maxDrawdown.toFixed(2)}%`, "danger") : "",
+    mostVolatile ? insightCard("Most volatile", `${mostVolatile.instrument} · ${mostVolatile.risk.volatility.toFixed(2)}% annualised`, "warning") : "",
+    insightCard("Sector diversification", `${sectorTotals.size} active sector${sectorTotals.size === 1 ? "" : "s"}`, sectorTotals.size > 1 ? "primary" : "warning"),
   ].filter(Boolean).join("");
   document.getElementById("insights").innerHTML = html || '<div class="text-muted">Not enough holding history to generate insights.</div>';
 }
@@ -224,10 +263,10 @@ function renderTrends(holdings) {
       <div class="card h-100 border-${riskTone}">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start gap-2">
-            <div><h6 class="card-title mb-1">${holding.instrument}</h6><div class="small text-muted">${holding.sector} · Last price ${formatMoney(holding.latest.ltp)} · ${holding.heldDays} days tracked</div></div>
+            <div><h6 class="card-title mb-1">${holding.instrument} <span class="badge text-bg-${action.tone} align-middle">${action.label}</span></h6><div class="small text-muted">${holding.sector} · Last price ${formatMoney(holding.latest.ltp)} · ${holding.heldDays} days tracked${holding.splitEvents ? " · split-adjusted history" : ""}</div></div>
             <span class="badge text-bg-${riskTone}">${holding.risk.level} risk</span>
           </div>
-          <div class="d-flex justify-content-between align-items-center mt-3"><span class="badge text-bg-${action.tone}">${action.label}</span><span class="small text-muted">${action.detail}</span></div>
+          <div class="small text-muted mt-3">${action.detail}</div>
           <p class="small mt-3 mb-3">${trendSummary(holding)}</p>
           <div class="mb-3" style="height:140px"><canvas id="momentum-chart-${holdings.indexOf(holding)}"></canvas></div>
           <div class="row g-2 small mb-3">
