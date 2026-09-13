@@ -26,8 +26,10 @@ function createConnection() {
 async function getData() {
   connection = await createConnection();
   const [rows] = await connection.query(`SELECT h.id, h.date, h.instrument_id, h.qty, h.avg_cost,
-    h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument
+    h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument,
+    s.name AS sector
     FROM holdings h INNER JOIN instrument i ON h.instrument_id = i.id
+    LEFT JOIN sector s ON i.sector_id = s.id
     WHERE i.is_active = TRUE ORDER BY h.instrument_id, h.date, h.id`);
   const [benchmarkRows] = await connection.query("SELECT date, nifty_50 FROM daily_pl WHERE nifty_50 IS NOT NULL ORDER BY date");
   return { rows, benchmarkRows };
@@ -42,7 +44,7 @@ function groupHoldings(rows) {
   return [...grouped.values()].map((history) => {
     const latest = history[history.length - 1];
     const first = history[0];
-    return { instrument: latest.instrument, history, latest, first };
+    return { instrument: latest.instrument, sector: latest.sector || "Unclassified", history, latest, first };
   });
 }
 
@@ -127,15 +129,36 @@ function decorateHolding(item) {
   };
 }
 
-function displayChange(change) {
+function trendChange(change) {
   if (!change) return '<span class="text-muted">—</span>';
-  return `<span style="color:${colorFor(change.percent)}" title="${formatMoney(change.value)}">${change.percent >= 0 ? "+" : ""}${change.percent.toFixed(2)}%</span>`;
+  return `<span style="color:${colorFor(change.percent)}">${change.percent >= 0 ? "+" : ""}${change.percent.toFixed(2)}%</span>`;
 }
 
-function bestBy(holdings, getter) {
-  return holdings
-    .filter((holding) => getter(holding) != null && Number.isFinite(getter(holding)))
-    .sort((a, b) => getter(b) - getter(a))[0];
+function trendSummary(holding) {
+  const recent = holding.changes.month || holding.changes.quarter || holding.changes.all;
+  if (!recent) return "There is not enough price history to identify a clear trend.";
+  const direction = recent.percent > 0 ? "upward" : recent.percent < 0 ? "downward" : "flat";
+  const period = recent === holding.changes.month ? "over the past month" : recent === holding.changes.quarter ? "this quarter" : "since the first record";
+  const benchmarkText = holding.risk.relative === null
+    ? "Benchmark comparison is unavailable."
+    : holding.risk.relative >= 0
+      ? `It is ahead of the Nifty by ${holding.risk.relative.toFixed(2)} percentage points over the recorded period.`
+      : `It is behind the Nifty by ${Math.abs(holding.risk.relative).toFixed(2)} percentage points over the recorded period.`;
+  return `The price trend is ${direction} ${period} (${recent.percent >= 0 ? "+" : ""}${recent.percent.toFixed(2)}%). ${benchmarkText}`;
+}
+
+function actionFor(holding) {
+  const month = holding.changes.month?.percent;
+  const quarter = holding.changes.quarter?.percent;
+  const relative = holding.risk.relative;
+  if (month === undefined || quarter === undefined) return { label: "Hold / monitor", tone: "secondary", detail: "More price history is needed before taking action." };
+  if (month < 0 && quarter < 0 && (holding.risk.level === "High" || relative !== null && relative < -5)) {
+    return { label: "Review / consider selling", tone: "danger", detail: "Recent momentum and benchmark performance are weak." };
+  }
+  if (month > 0 && quarter > 0 && relative !== null && relative > 0 && holding.risk.level !== "High") {
+    return { label: "Consider buying more", tone: "success", detail: "Momentum and benchmark performance are positive with manageable risk." };
+  }
+  return { label: "Hold", tone: "primary", detail: month < 0 ? "Short-term weakness suggests waiting for confirmation." : "Performance is mixed; continue monitoring the trend." };
 }
 
 function insightCard(title, text, tone = "secondary") {
@@ -143,31 +166,104 @@ function insightCard(title, text, tone = "secondary") {
 }
 
 function renderInsights(holdings) {
-  const bestAll = bestBy(holdings, (holding) => holding.changes.all?.percent);
-  const bestRecent = bestBy(holdings, (holding) => holding.changes.quarter?.percent);
-  const longest = [...holdings].sort((a, b) => b.heldDays - a.heldDays)[0];
-  const needsAttention = [...holdings].filter((holding) => holding.latest.p_l < 0).sort((a, b) => a.latest.p_l - b.latest.p_l)[0];
-  const largest = [...holdings].sort((a, b) => b.latest.cur_val - a.latest.cur_val)[0];
-  const biggestGain = [...holdings].sort((a, b) => b.latest.p_l - a.latest.p_l)[0];
-  const mostVolatile = [...holdings].sort((a, b) => {
-    const changes = a.history.map((row, index) => index && a.history[index - 1].ltp ? (row.ltp - a.history[index - 1].ltp) / a.history[index - 1].ltp : 0);
-    const bChanges = b.history.map((row, index) => index && b.history[index - 1].ltp ? (row.ltp - b.history[index - 1].ltp) / b.history[index - 1].ltp : 0);
-    const volatility = (values) => values.length ? Math.sqrt(values.reduce((sum, value) => sum + value * value, 0) / values.length) : 0;
-    return volatility(bChanges) - volatility(changes);
-  })[0];
+  const bestMomentum = [...holdings].sort((a, b) => (b.changes.month?.percent || -Infinity) - (a.changes.month?.percent || -Infinity))[0];
+  const bestOverall = [...holdings].sort((a, b) => (b.changes.all?.percent || -Infinity) - (a.changes.all?.percent || -Infinity))[0];
+  const review = holdings.find((holding) => actionFor(holding).tone === "danger");
+  const addCandidate = holdings.find((holding) => actionFor(holding).tone === "success");
+  const sectorTotals = new Map();
+  holdings.forEach((holding) => sectorTotals.set(holding.sector, (sectorTotals.get(holding.sector) || 0) + holding.latest.cur_val));
+  const largestSector = [...sectorTotals.entries()].sort((a, b) => b[1] - a[1])[0];
+  const highRisk = holdings.filter((holding) => holding.risk.level === "High").length;
   const rising = holdings.filter((holding) => holding.changes.month?.percent > 0).length;
-  const falling = holdings.filter((holding) => holding.changes.month?.percent < 0).length;
   const html = [
-    bestAll ? insightCard("Best since first record", `${bestAll.instrument} · ${bestAll.changes.all.percent.toFixed(2)}%`, "success") : "",
-    bestRecent ? insightCard("Best recent momentum", `${bestRecent.instrument} · ${bestRecent.changes.quarter.percent.toFixed(2)}% this quarter`, "success") : "",
-    longest ? insightCard("Held the longest", `${longest.instrument} · ${longest.heldDays} days`, "primary") : "",
-    needsAttention ? insightCard("Needs attention", `${needsAttention.instrument} · ${formatMoney(needsAttention.latest.p_l)} P/L`, "danger") : "",
-    largest ? insightCard("Largest position", `${largest.instrument} · ${formatMoney(largest.latest.cur_val)}`, "info") : "",
-    biggestGain ? insightCard("Largest P/L contribution", `${biggestGain.instrument} · ${formatMoney(biggestGain.latest.p_l)}`, "success") : "",
-    mostVolatile ? insightCard("Most volatile", `${mostVolatile.instrument} · frequent price swings`, "warning") : "",
-    insightCard("Monthly breadth", `${rising} rising · ${falling} falling`, rising >= falling ? "success" : "warning"),
+    bestMomentum?.changes.month ? insightCard("Best monthly momentum", `${bestMomentum.instrument} · ${bestMomentum.changes.month.percent.toFixed(2)}%`, "success") : "",
+    bestOverall?.changes.all ? insightCard("Best since first record", `${bestOverall.instrument} · ${bestOverall.changes.all.percent.toFixed(2)}%`, "success") : "",
+    addCandidate ? insightCard("Potential add", `${addCandidate.instrument} · ${actionFor(addCandidate).detail}`, "success") : "",
+    review ? insightCard("Needs review", `${review.instrument} · ${actionFor(review).detail}`, "danger") : "",
+    largestSector ? insightCard("Largest sector exposure", `${largestSector[0]} · ${formatMoney(largestSector[1])}`, "info") : "",
+    insightCard("Monthly breadth", `${rising} of ${holdings.length} holdings rising`, rising >= holdings.length / 2 ? "success" : "warning"),
+    insightCard("High-risk holdings", `${highRisk} requiring closer monitoring`, highRisk ? "warning" : "success"),
   ].filter(Boolean).join("");
   document.getElementById("insights").innerHTML = html || '<div class="text-muted">Not enough holding history to generate insights.</div>';
+}
+
+function renderMomentumChart(holding, index) {
+  const canvas = document.getElementById(`momentum-chart-${index}`);
+  if (!canvas || typeof Chart === "undefined") return;
+  const points = holding.history.slice(-30);
+  const firstPrice = points[0]?.ltp || 0;
+  new Chart(canvas.getContext("2d"), {
+    type: "line",
+    data: {
+      labels: points.map((row) => row.date.format("DD MMM")),
+      datasets: [{
+        label: "Price momentum",
+        data: points.map((row) => firstPrice ? (row.ltp - firstPrice) * 100 / firstPrice : 0),
+        borderColor: holding.changes.month?.percent >= 0 ? "#087f23" : "#dc3545",
+        backgroundColor: "rgba(8, 127, 35, 0.08)",
+        pointRadius: 0,
+        borderWidth: 2,
+        tension: 0.25,
+        fill: true,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${context.parsed.y.toFixed(2)}% from period start` } } },
+      scales: { x: { display: false }, y: { ticks: { callback: (value) => `${value}%` }, grid: { color: "rgba(0,0,0,.06)" } } },
+    },
+  });
+}
+
+function renderTrends(holdings) {
+  const html = holdings.map((holding) => {
+    const riskTone = holding.risk.level === "High" ? "danger" : holding.risk.level === "Medium" ? "warning" : "success";
+    const action = actionFor(holding);
+    return `<div class="col-md-6 col-xl-4">
+      <div class="card h-100 border-${riskTone}">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div><h6 class="card-title mb-1">${holding.instrument}</h6><div class="small text-muted">${holding.sector} · Last price ${formatMoney(holding.latest.ltp)} · ${holding.heldDays} days tracked</div></div>
+            <span class="badge text-bg-${riskTone}">${holding.risk.level} risk</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-3"><span class="badge text-bg-${action.tone}">${action.label}</span><span class="small text-muted">${action.detail}</span></div>
+          <p class="small mt-3 mb-3">${trendSummary(holding)}</p>
+          <div class="mb-3" style="height:140px"><canvas id="momentum-chart-${holdings.indexOf(holding)}"></canvas></div>
+          <div class="row g-2 small mb-3">
+            <div class="col-6"><span class="text-muted d-block">Quantity</span><strong>${holding.latest.qty} units</strong></div>
+            <div class="col-6"><span class="text-muted d-block">Average cost</span><strong>${formatMoney(holding.latest.avg_cost)}</strong></div>
+            <div class="col-6"><span class="text-muted d-block">Current value</span><strong>${formatMoney(holding.latest.cur_val)}</strong></div>
+            <div class="col-6"><span class="text-muted d-block">P/L</span><strong style="color:${colorFor(holding.latest.p_l)}">${formatMoney(holding.latest.p_l)} (${holding.returnPercent.toFixed(2)}%)</strong></div>
+            <div class="col-6"><span class="text-muted d-block">Held since</span><strong>${formatDate(holding.history[0].date)}</strong></div>
+            <div class="col-6"><span class="text-muted d-block">Max drawdown</span><strong style="color:${colorFor(holding.risk.maxDrawdown)}">${holding.risk.maxDrawdown.toFixed(2)}%</strong></div>
+          </div>
+          <div class="border-top pt-2">
+            <div class="small text-muted mb-1">Price change by period</div>
+            <div class="row g-2 small">
+              <div class="col-4"><span class="text-muted d-block">Day</span><strong>${trendChange(holding.changes.day)}</strong></div>
+              <div class="col-4"><span class="text-muted d-block">Week</span><strong>${trendChange(holding.changes.week)}</strong></div>
+              <div class="col-4"><span class="text-muted d-block">Month</span><strong>${trendChange(holding.changes.month)}</strong></div>
+              <div class="col-4"><span class="text-muted d-block">Quarter</span><strong>${trendChange(holding.changes.quarter)}</strong></div>
+              <div class="col-4"><span class="text-muted d-block">Half-year</span><strong>${trendChange(holding.changes.halfYear)}</strong></div>
+              <div class="col-4"><span class="text-muted d-block">Year</span><strong>${trendChange(holding.changes.year)}</strong></div>
+              <div class="col-4"><span class="text-muted d-block">Since first record</span><strong>${trendChange(holding.changes.all)}</strong></div>
+            </div>
+          </div>
+          <div class="border-top mt-3 pt-2 small">
+            <div class="text-muted mb-1">Risk and benchmark</div>
+            <div class="row g-2">
+              <div class="col-4"><span class="text-muted d-block">Volatility</span><strong>${holding.risk.volatility ? `${holding.risk.volatility.toFixed(2)}%` : "—"}</strong></div>
+              <div class="col-4"><span class="text-muted d-block">Beta</span><strong>${holding.risk.beta === null ? "—" : holding.risk.beta.toFixed(2)}</strong></div>
+              <div class="col-4"><span class="text-muted d-block">Vs Nifty</span><strong style="color:${colorFor(holding.risk.relative)}">${holding.risk.relative === null ? "—" : `${holding.risk.relative >= 0 ? "+" : ""}${holding.risk.relative.toFixed(2)}%`}</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById("stock-trends").innerHTML = html || '<div class="text-muted">No stock trend data available.</div>';
+  holdings.forEach((holding, index) => renderMomentumChart(holding, index));
 }
 
 function render(data) {
@@ -187,43 +283,7 @@ function render(data) {
   document.getElementById("holding-count").textContent = String(holdings.length);
   document.getElementById("observations").textContent = `${positive} profitable · ${holdings.length - positive} losing`;
   renderInsights(holdings);
-
-  document.getElementById("holdings-body").innerHTML = holdings.map((holding) => `<tr>
-    <td><strong>${holding.instrument}</strong><div class="small text-muted">${holding.latest.qty} units · ${formatMoney(holding.latest.ltp)} last price</div></td>
-    <td>${formatDate(holding.history[0].date)}<div class="small text-muted">${holding.heldDays} days</div></td>
-    <td class="text-end">${formatMoney(holding.latest.cur_val)}</td>
-    <td class="text-end" style="color:${colorFor(holding.latest.p_l)}">${formatMoney(holding.latest.p_l)}<div class="small">${holding.returnPercent.toFixed(2)}%</div></td>
-    <td class="text-end">${displayChange(holding.changes.day)}</td>
-    <td class="text-end">${displayChange(holding.changes.week)}</td>
-    <td class="text-end">${displayChange(holding.changes.month)}</td>
-    <td class="text-end">${displayChange(holding.changes.quarter)}</td>
-    <td class="text-end">${displayChange(holding.changes.halfYear)}</td>
-    <td class="text-end">${displayChange(holding.changes.year)}</td>
-  </tr>`).join("") || '<tr><td colspan="10" class="text-muted">No active holdings data available.</td></tr>';
-
-  const longTerm = holdings.filter((holding) => holding.heldDays >= 365);
-  document.getElementById("long-term-body").innerHTML = longTerm.map((holding) => `<tr>
-    <td><strong>${holding.instrument}</strong></td>
-    <td>${formatDate(holding.history[0].date)}</td>
-    <td>${holding.heldDays} days</td>
-    <td class="text-end">${formatMoney(holding.latest.cur_val)}</td>
-    <td class="text-end" style="color:${colorFor(holding.latest.p_l)}">${formatMoney(holding.latest.p_l)}</td>
-    <td class="text-end" style="color:${colorFor(holding.returnPercent)}">${holding.returnPercent.toFixed(2)}%</td>
-    <td class="text-end">${displayChange(holding.changes.year)}</td>
-  </tr>`).join("") || '<tr><td colspan="7" class="text-muted">No stock has been held for more than one year.</td></tr>';
-
-  const riskBody = document.getElementById("risk-body");
-  riskBody.innerHTML = holdings.map((holding) => `<tr>
-    <td><strong>${holding.instrument}</strong></td>
-    <td><span class="badge text-bg-${holding.risk.level === "High" ? "danger" : holding.risk.level === "Medium" ? "warning" : "success"}">${holding.risk.level}</span></td>
-    <td class="text-end">${holding.risk.volatility ? `${holding.risk.volatility.toFixed(2)}%` : "—"}</td>
-    <td class="text-end" style="color:${colorFor(holding.risk.maxDrawdown)}">${holding.risk.maxDrawdown.toFixed(2)}%</td>
-    <td class="text-end">${holding.risk.beta === null ? "—" : holding.risk.beta.toFixed(2)}</td>
-    <td class="text-end">${holding.risk.stockReturn === null ? "—" : `${holding.risk.stockReturn >= 0 ? "+" : ""}${holding.risk.stockReturn.toFixed(2)}%`}</td>
-    <td class="text-end">${holding.risk.marketReturn === null ? "—" : `${holding.risk.marketReturn >= 0 ? "+" : ""}${holding.risk.marketReturn.toFixed(2)}%`}</td>
-    <td class="text-end" style="color:${colorFor(holding.risk.relative)}">${holding.risk.relative === null ? "—" : `${holding.risk.relative >= 0 ? "+" : ""}${holding.risk.relative.toFixed(2)}%`}</td>
-    <td>${holding.risk.relative !== null && holding.risk.relative < 0 ? "Underperforming Nifty" : "Outperforming / unavailable"}</td>
-  </tr>`).join("") || '<tr><td colspan="9" class="text-muted">No risk data available.</td></tr>';
+  renderTrends(holdings);
 }
 
 async function load() {
