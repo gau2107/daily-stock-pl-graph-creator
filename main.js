@@ -25,7 +25,7 @@ async function createWindow() {
     width: 800,
     height: 600,
     show: false,
-    icon: __dirname + "/ico.ico",
+    icon: path.join(__dirname, "ico.ico"),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

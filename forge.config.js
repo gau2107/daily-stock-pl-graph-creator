@@ -1,12 +1,17 @@
+const path = require('path');
+
 module.exports = {
   packagerConfig: {
-    icon: './ico.ico',
+    icon: path.join(__dirname, 'ico.ico'),
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        iconUrl: 'https://raw.githubusercontent.com/gau2107/daily-stock-pl-graph-creator/master/ico.ico',
+        setupIcon: path.join(__dirname, 'ico.ico'),
+      },
     },
     {
       name: '@electron-forge/maker-zip',
