@@ -11,16 +11,21 @@ dotenv.config({ path: path.resolve(__dirname, envFilePath) });
 
 let totalInstruments = 0;
 let backgroundColors;
+let holdingsByDate = [];
+let playbackIndex = 0;
+let playbackTimer;
+let isPlayingHistory = false;
+let disableChartAnimations = false;
 
 // table data
-function displayData(parentData, instruments, totalCount) {
-  const itemsPerPage = 10; // Number of items to display per page
+function displayData(parentData, instruments) {
+  const itemsPerPage = 10;
   const dataBody = document.getElementById('dataBody');
   const tableHead = document.getElementById('tableHead');
   const pagination = document.getElementById('pagination');
 
-  // Calculate the number of pages
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  const totalPages = Math.ceil(parentData.length / itemsPerPage);
+  tableHead.innerHTML = '<th scope="col">Date</th>';
   for (let i = 0; i < instruments.length; i++) {
     const cell = document.createElement('th');
     cell.scope = "col";
@@ -30,7 +35,7 @@ function displayData(parentData, instruments, totalCount) {
   }
   // Function to display a specific page
   async function displayPage(pageNumber) {
-    let data = JSON.parse(JSON.stringify(parentData)).reverse();
+    const data = [...parentData].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     dataBody.innerHTML = ''; // Clear the table body
 
@@ -117,6 +122,7 @@ function doughnutChart(rows) {
     data: data,
     options: {
       responsive: true,
+      animation: disableChartAnimations ? false : undefined,
       maintainAspectRatio: false,
       cutout: 98,
       plugins: {
@@ -175,6 +181,7 @@ function compareChart(rows) {
     data: data,
     options: {
       responsive: true,
+      animation: disableChartAnimations ? false : undefined,
       plugins: {
         legend: {
           position: "top",
@@ -211,6 +218,7 @@ function plChart(rows) {
     data: data,
     options: {
       responsive: true,
+      animation: disableChartAnimations ? false : undefined,
       plugins: {
         legend: {
           position: "top",
@@ -245,6 +253,7 @@ function plValueChart(rows) {
     data: data,
     options: {
       responsive: true,
+      animation: disableChartAnimations ? false : undefined,
       plugins: {
         legend: {
           position: "top",
@@ -266,7 +275,7 @@ function plValueChart(rows) {
   new Chart(chartCanvas, config);
 }
 
-function allHoldingsChart(rows, instruments, isRunningFirstTime, totalCount) {
+function allHoldingsChart(rows, instruments, isRunningFirstTime) {
   const groupedData = rows.reduce((acc, obj) => {
     const date = new Date(obj.date).getTime();
     const existingGroup = acc.find(
@@ -281,8 +290,6 @@ function allHoldingsChart(rows, instruments, isRunningFirstTime, totalCount) {
   }, []);
 
   const labels = groupedData.map((data) => new Date(data.date).toDateString());
-  if (isRunningFirstTime) displayData(groupedData, instruments, totalCount);
-
   function getPercent(found) {
     if (found) return (100 * found.p_l) / (found.cur_val - found.p_l || 1);
     else return undefined;
@@ -336,6 +343,59 @@ function allHoldingsChart(rows, instruments, isRunningFirstTime, totalCount) {
   }
 }
 
+function updateSnapshotCharts(rows) {
+  ["doughnut-chart", "compare-chart", "pl-chart", "pl-value-chart"].forEach((id) => {
+    const chart = Chart.getChart(document.getElementById(id));
+    if (chart) chart.destroy();
+  });
+
+  doughnutChart(rows);
+  compareChart(rows);
+  plChart(rows);
+  plValueChart(rows);
+}
+
+function renderPlaybackFrame(index) {
+  const entry = holdingsByDate[index];
+  if (!entry) return;
+
+  updateSnapshotCharts(entry.data);
+  document.getElementById("playback-date").textContent = dayjs(entry.date).format("D MMM YYYY");
+}
+
+function playNextHistoryEntry() {
+  if (!isPlayingHistory) return;
+
+  if (playbackIndex >= holdingsByDate.length) {
+    isPlayingHistory = false;
+    disableChartAnimations = false;
+    document.getElementById("play-history").textContent = "Play";
+    return;
+  }
+
+  renderPlaybackFrame(playbackIndex);
+  playbackIndex += 1;
+  playbackTimer = setTimeout(playNextHistoryEntry, 900);
+}
+
+const playHistoryButton = document.getElementById("play-history");
+playHistoryButton.addEventListener("click", () => {
+  if (isPlayingHistory) {
+    isPlayingHistory = false;
+    disableChartAnimations = false;
+    clearTimeout(playbackTimer);
+    playHistoryButton.textContent = "Play";
+    return;
+  }
+
+  if (holdingsByDate.length === 0) return;
+  if (playbackIndex >= holdingsByDate.length) playbackIndex = 0;
+  isPlayingHistory = true;
+  disableChartAnimations = true;
+  playHistoryButton.textContent = "Pause";
+  playNextHistoryEntry();
+});
+
 // Code for when user click on filter btn which contains start and end date
 const filterBtn = document.getElementById("filter");
 filterBtn.addEventListener("click", async () => {
@@ -365,25 +425,35 @@ async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) 
   );
 
   allInstruments = allInstruments.sort((a, b) => a.instrumentId - b.instrumentId);
+  if (isRunningFirstTime) {
+    const [historyRows] = await connection.query(
+      `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
+        i.name AS instrument, i.sector_id, i.id AS instrumentId
+      FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id
+      WHERE i.is_active = true
+      ORDER BY h.date ASC, h.id ASC;`
+    );
+    const historyByDate = new Map();
+    historyRows.forEach((row) => {
+      const date = dayjs(row.date).format("YYYY-MM-DD");
+      if (!historyByDate.has(date)) historyByDate.set(date, []);
+      historyByDate.get(date).push(row);
+    });
+    const groupedHistory = Array.from(historyByDate, ([date, data]) => ({
+      date,
+      data: data.sort((a, b) => a.instrumentId - b.instrumentId),
+    }));
+    holdingsByDate = groupedHistory;
+    displayData(groupedHistory, allInstruments);
+    playHistoryButton.disabled = groupedHistory.length === 0;
+  }
+
   let [allRows] = await connection.query(
     `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg, i.name AS instrument, i.sector_id
     FROM holdings AS h INNER JOIN instrument AS i ON h.instrument_id = i.id 
     WHERE h.date > '${dayjs(startDate).format('YYYY-MM-DD')}' 
     AND h.date <= '${dayjs(endDate).format('YYYY-MM-DD')}' 
     AND i.is_active = true;`
-  );
-
-  let [instrumentId] = await connection.query(
-    `SELECT i.id FROM holdings as h 
-    INNER JOIN instrument as i 
-    WHERE i.id = h.instrument_id 
-    AND i.is_active = TRUE 
-    ORDER BY date ASC 
-    LIMIT 1`);
-
-
-  let [count] = await connection.query(
-    `SELECT COUNT(id) as count FROM holdings WHERE instrument_id = ${instrumentId[0].id}`
   );
 
   if (isRunningFirstTime) {
@@ -395,51 +465,8 @@ async function getDataAsPerStartEndDate(startDate, endDate, isRunningFirstTime) 
     plValueChart(allInstruments);
   }
 
-  allHoldingsChart(allRows, allInstruments, isRunningFirstTime, count[0].count)
+  allHoldingsChart(allRows, allInstruments, isRunningFirstTime)
 }
-
-// Code for when user select specific date from date traverser input tag
-const dateTraverserInput = document.getElementById("filter-date");
-dateTraverserInput.addEventListener("change", async () => {
-  const filterDate = document.getElementById("filter-date").value;
-  var date = new Date(filterDate);
-  var dayOfWeek = date.getDay();
-
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
-    alert('Weekends are not allowed. Please select a weekday.');
-    document.getElementById('filter-date').value = '';
-    return;
-  }
-  let chartId = document.getElementById('compare-chart');
-  var context = chartId.getContext('2d');
-  let chartIdDoughnut = document.getElementById('doughnut-chart');
-  var contextDoughnut = chartIdDoughnut.getContext('2d');
-  let chartIdPl = document.getElementById('pl-chart');
-  var contextPl = chartIdPl.getContext('2d');
-  let chartIdPlValue = document.getElementById('pl-value-chart');
-  var contextPlValue = chartIdPlValue.getContext('2d');
-
-  Chart.helpers.each(Chart.instances, function (instance) {
-    if (instance.ctx === context || instance.ctx === contextDoughnut || instance.ctx === contextPl || instance.ctx === contextPlValue) {
-      instance.destroy();
-      return;
-    }
-  });
-
-  const connection = await createTursoClient();
-
-  [rows] = await connection.query(
-    `SELECT h.id, h.date, h.qty, h.avg_cost, h.ltp, h.cur_val, h.p_l, h.net_chg, h.day_chg,
-      i.name AS instrument, i.sector_id, i.id as instrumentId FROM holdings AS h INNER JOIN instrument AS i ON
-      h.instrument_id = i.id WHERE i.is_active = true AND h.date = '${filterDate}'
-      ORDER BY h.id DESC;`
-  );
-  rows = rows.sort((a, b) => a.instrumentId - b.instrumentId);
-  doughnutChart(rows);
-  compareChart(rows);
-  plChart(rows);
-  plValueChart(rows);
-});
 
 // Code execution starts here. Load the instrument count before building queries
 // that use it for pagination.

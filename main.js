@@ -61,7 +61,8 @@ Menu.setApplicationMenu(menu);
   });
 
   function getCurrentDataForChart(rows) {
-    let data = rows.map((row) => row.current_value);
+    rows = sortDailyRows(rows);
+    const data = rows.map((row) => Number(row.current_value) || 0);
     let bgColors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, .5)" : "rgba(39, 174, 96, .5)");
     let colors = rows.map((row) => row.daily_pl < 0 ? "rgba(255, 110, 100, 1)" : "rgba(39, 174, 96, 1)");
     return {
@@ -79,14 +80,26 @@ Menu.setApplicationMenu(menu);
     };
   }
 
-  function getDailyPlDataForChart(rows) {
-    const dailyChartData = rows.map((row) => row.daily_pl);
-    const totalProfit = dailyChartData.reduce((sum, val) => sum + val, 0);
-    const totalProfitPercent = ((totalProfit / Math.abs(dailyChartData[0] || 1)) * 100).toFixed(2);
+  function getDailyChanges(rows) {
+    const sortedRows = sortDailyRows(rows);
+    return new Map(sortedRows.map((row, index) => {
+      const previousValue = index > 0 ? Number(sortedRows[index - 1].current_value) : 0;
+      const currentValue = Number(row.current_value);
+      const change = index > 0 && Number.isFinite(previousValue) && Number.isFinite(currentValue)
+        ? currentValue - previousValue
+        : Number(row.daily_pl) || 0;
+      return [row, change];
+    }));
+  }
+
+  function getDailyPlDataForChart(rows, allRows = rows) {
+    rows = sortDailyRows(rows);
+    const dailyChanges = getDailyChanges(allRows);
+    const dailyChartData = rows.map((row) => dailyChanges.get(row) || 0);
     
     function colors(opacity) {
-      return rows.map((row) =>
-        row.daily_pl < 0 ? `rgba(255, 110, 100, ${opacity})` : `rgba(0, 125, 10, ${opacity})`
+      return dailyChartData.map((value) =>
+        value < 0 ? `rgba(255, 110, 100, ${opacity})` : `rgba(0, 125, 10, ${opacity})`
       );
     }
     
@@ -94,7 +107,7 @@ Menu.setApplicationMenu(menu);
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
         {
-          label: `Daily PL (${totalProfitPercent}%)`,
+          label: "Change since previous entry (₹)",
           data: dailyChartData,
           borderColor: colors(1),
           backgroundColor: colors(.5),
@@ -105,6 +118,9 @@ Menu.setApplicationMenu(menu);
   }
 
   function getNiftyDataForChart(rows) {
+    rows = sortDailyRows(rows);
+    const firstNifty = Number(rows[0]?.nifty_50) || 0;
+    const firstCurrentValue = Number(rows[0]?.current_value) || 0;
     return {
       labels: rows.map((row) => new Date(row.date).toDateString()),
       datasets: [
@@ -112,7 +128,7 @@ Menu.setApplicationMenu(menu);
           label: "Nifty",
           data: rows.map(
             (row) =>
-              ((row.nifty_50 - rows[0].nifty_50) * 100) / rows[0].nifty_50
+              firstNifty ? ((Number(row.nifty_50) - firstNifty) * 100) / firstNifty : 0
           ),
           borderColor: "rgba(255, 110, 100, 1)",
           backgroundColor: "rgba(255, 110, 100, .5)",
@@ -123,8 +139,9 @@ Menu.setApplicationMenu(menu);
           label: "Total P/L",
           data: rows.map(
             (row) =>
-              ((row.current_value - rows[0].current_value) * 100) /
-              rows[0].current_value
+              firstCurrentValue
+                ? ((Number(row.current_value) - firstCurrentValue) * 100) / firstCurrentValue
+                : 0
           ),
           borderColor: "rgba(0, 125, 10, 1)",
           backgroundColor: "rgba(0, 125, 10, .5)",
@@ -135,151 +152,116 @@ Menu.setApplicationMenu(menu);
     };
   }  
 
+  function sortDailyRows(rows) {
+    return [...rows].sort(
+      (a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf() || Number(a.id) - Number(b.id)
+    );
+  }
+
+  function getPeriodRows(rows, amount, unit) {
+    const sortedRows = sortDailyRows(rows);
+    const latestDate = sortedRows[sortedRows.length - 1]?.date;
+    if (!latestDate) return [];
+    const cutoff = dayjs(latestDate).subtract(amount, unit);
+    return sortedRows.filter((row) => !dayjs(row.date).isBefore(cutoff));
+  }
+
   win.webContents.on("did-finish-load", async () => {
     try {
       win.totalInstruments = instruments.length;
 
-      let [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'month').format('YYYY-MM-DD')}'`);
-      let [startRow] = await connection.query("SELECT * FROM daily_pl LIMIT 1");
-      let [yearRow] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'year').format('YYYY-MM-DD')}' LIMIT 1`);
-      let [maxProfit] = await connection.query(`SELECT MAX(daily_pl) as max, MAX(current_value) as maxCV FROM daily_pl`);
-      win.webContents.executeJavaScript(`const highestPlTag = document.getElementById("highest-profit");
-      highestPlTag.innerHTML = ${maxProfit[0].max};
-      highestPlTag.style.color = 'green';
-      `);
+      const [dailyRows] = await connection.query(
+        "SELECT * FROM daily_pl ORDER BY date ASC, id ASC"
+      );
+      const rows = sortDailyRows(dailyRows);
+      const dailyChanges = getDailyChanges(rows);
 
-      let [minProfit] = await connection.query(`SELECT MIN(daily_pl) as min FROM daily_pl`);
-      win.webContents.executeJavaScript(`const lowestPlTag = document.getElementById("lowest-profit");
-      lowestPlTag.innerHTML = ${minProfit[0].min};
-      lowestPlTag.style.color = 'red';
-      `);
+      const number = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
+      const latest = rows[rows.length - 1];
+      const previous = rows[rows.length - 2];
+      const first = rows[0];
+      const rangeBaseline = (amount, unit) => {
+        if (!latest) return undefined;
+        const cutoff = dayjs(latest.date).subtract(amount, unit);
+        return [...rows].reverse().find((row) => !dayjs(row.date).isAfter(cutoff)) || first;
+      };
+      const changeMetric = (baseline, currentValue = latest?.current_value) => {
+        if (!baseline || currentValue === undefined) return { text: "N/A", color: "gray" };
+        const difference = number(currentValue) - number(baseline.current_value);
+        const percent = number(baseline.current_value)
+          ? (difference * 100 / number(baseline.current_value)).toFixed(2)
+          : "N/A";
+        return {
+          text: `${difference.toFixed(2)} (${percent}%)`,
+          color: difference > 0 ? "green" : difference < 0 ? "red" : "gray",
+        };
+      };
+      const metrics = {
+        "highest-profit": {
+          text: rows.length
+            ? [...dailyChanges.values()].reduce((highest, value) => Math.max(highest, value), -Infinity).toFixed(2)
+            : "N/A",
+          color: "green",
+        },
+        "lowest-profit": {
+          text: rows.length
+            ? [...dailyChanges.values()].reduce((lowest, value) => Math.min(lowest, value), Infinity).toFixed(2)
+            : "N/A",
+          color: "red",
+        },
+        "last-pl": latest
+          ? {
+              text: `${number(dailyChanges.get(latest)).toFixed(2)} (${previous && number(previous.current_value)
+                ? (number(dailyChanges.get(latest)) * 100 / number(previous.current_value)).toFixed(2)
+                : "N/A"}%)`,
+              color: number(dailyChanges.get(latest)) > 0
+                ? "green"
+                : number(dailyChanges.get(latest)) < 0 ? "red" : "gray",
+            }
+          : { text: "N/A", color: "gray" },
+        "total-pl": latest && first
+          ? {
+              text: `${number(latest.total_pl).toFixed(2)} (${number(first.current_value)
+                ? (number(latest.total_pl) * 100 / number(first.current_value)).toFixed(2)
+                : "N/A"}%)`,
+              color: number(latest.total_pl) > 0 ? "green" : number(latest.total_pl) < 0 ? "red" : "gray",
+            }
+          : { text: "N/A", color: "gray" },
+        "highest-value": rows.length
+          ? changeMetric(
+              first,
+              rows.reduce((highest, row) => Math.max(highest, number(row.current_value)), -Infinity)
+            )
+          : { text: "N/A", color: "gray" },
+        "last-week-change": changeMetric(rangeBaseline(1, "week")),
+        "last-month-change": changeMetric(rangeBaseline(1, "month")),
+        "1-year-returns": changeMetric(rangeBaseline(1, "year")),
+      };
 
-      // Add guard for empty rows
-      if (!rows || rows.length < 2) {
-        win.webContents.executeJavaScript(`const lastPlTag = document.getElementById("last-pl");
-        lastPlTag.innerHTML = "N/A";
-        lastPlTag.style.color = "gray";
-        `);
-        win.webContents.executeJavaScript(`const totalPlTag = document.getElementById("total-pl");
-        totalPlTag.innerHTML = "N/A";
-        totalPlTag.style.color = "gray";
-        `);
-        win.webContents.executeJavaScript(`const highestValueTag = document.getElementById("highest-value");
-        highestValueTag.innerHTML = "N/A";
-        highestValueTag.style.color = "gray";
-        `);
-        win.webContents.executeJavaScript(`const streakTag = document.getElementById("streak");
-        streakTag.innerHTML = "N/A";
-        streakTag.style.color = "gray";
-        `);
-        win.webContents.executeJavaScript(`const lastWeekChange = document.getElementById("last-week-change");
-        lastWeekChange.innerHTML = "N/A";
-        lastWeekChange.style.color = "gray";
-        `);
-        win.webContents.executeJavaScript(`const lastMonthChange = document.getElementById("last-month-change");
-        lastMonthChange.innerHTML = "N/A";
-        lastMonthChange.style.color = "gray";
-        `);
-        win.webContents.executeJavaScript(`const lastYearReturns = document.getElementById("1-year-returns");
-        lastYearReturns.innerHTML = "N/A";
-        lastYearReturns.style.color = "gray";
-        `);
-        return;
-      }
-
-      const lastPl = rows[rows.length - 1].daily_pl;
-      const lastPlPercent = (
-        (lastPl * 100) /
-        rows[rows.length - 2].current_value
-      ).toFixed(2);
-      win.webContents.executeJavaScript(`const lastPlTag = document.getElementById("last-pl");
-      lastPlTag.innerHTML = ${lastPl};
-      lastPlTag.innerHTML = lastPlTag.innerHTML + " "+"("+${lastPlPercent}+"%)";        
-      lastPlTag.style.color = ${lastPl > 0 ? "'green'" : "'red'"};
-      `);
-
-      const totalPl = rows[rows.length - 1].total_pl;
-      const totalPlPercent = ((totalPl * 100) / startRow[0].current_value).toFixed(2);
-      win.webContents.executeJavaScript(`const totalPlTag = document.getElementById("total-pl");
-      totalPlTag.innerHTML = ${totalPl};
-      totalPlTag.innerHTML = totalPlTag.innerHTML + " "+"("+${totalPlPercent}+"%)";        
-      totalPlTag.style.color = ${totalPl > 0 ? "'green'" : "'red'"};
-      `);
-
-      const highestValue = maxProfit[0].maxCV;
-      const percent = (
-        ((highestValue - startRow[0].current_value) * 100) /
-        startRow[0].current_value
-      ).toFixed(2);
-      win.webContents.executeJavaScript(`const highestValueTag = document.getElementById("highest-value");
-      highestValueTag.innerHTML = ${highestValue};
-      highestValueTag.innerHTML = highestValueTag.innerHTML + " "+"("+${percent}+"%)";        
-      highestValueTag.style.color = 'green';
-      `);
-
-      // find the streak
       let streakType;
       let currentStreak = 0;
-      for (let i = rows.length - 1; i > 0; i--) {
-        if (streakType === "green" && rows[i].daily_pl < 0) {
-          break;
-        }
-        if (streakType === "red" && rows[i].daily_pl > 0) {
-          break;
-        }
-        if (rows[i].daily_pl > 0) {
-          currentStreak += 1;
-          streakType = "green";
-        } else {
-          currentStreak += 1;
-          streakType = "red";
-        }
+      for (let i = rows.length - 1; i >= 0; i--) {
+        const dailyReturn = number(dailyChanges.get(rows[i]));
+        if (dailyReturn === 0) break;
+        const currentType = dailyReturn > 0 ? "green" : "red";
+        if (streakType && streakType !== currentType) break;
+        streakType = currentType;
+        currentStreak += 1;
       }
+      metrics.streak = {
+        text: currentStreak ? `${currentStreak} ${streakType === "green" ? "📈" : "📉"}` : "0",
+        color: streakType || "gray",
+      };
 
-      win.webContents.executeJavaScript(`const streakTag = document.getElementById("streak");
-      streakTag.innerHTML = ${currentStreak};
-      streakTag.innerHTML += ${streakType === "green" ? "' 📈'" : "' 📉'"};
-      streakTag.style.color = "${streakType}";
+      await win.webContents.executeJavaScript(`
+        const metrics = ${JSON.stringify(metrics)};
+        Object.entries(metrics).forEach(([id, metric]) => {
+          const element = document.getElementById(id);
+          if (!element) return;
+          element.textContent = metric.text;
+          element.style.color = metric.color;
+        });
       `);
-
-      // compare last week to this week
-      const lastValue = rows[rows.length - 1].current_value;
-      const lastWeekPl = rows[rows.length - 5]?.current_value ?? lastValue;
-      const plDifference = lastValue - lastWeekPl;
-
-      win.webContents.executeJavaScript(`const lastWeekChange = document.getElementById("last-week-change");
-      lastWeekChange.innerHTML = ${plDifference.toFixed(2)};
-      lastWeekChange.innerHTML = lastWeekChange.innerHTML + " "+"("+${((plDifference * 100) / lastWeekPl).toFixed(2)}+"%)";
-      lastWeekChange.style.color = "${plDifference > 0 ? "green" : "red"}";
-      `);
-
-      // compare last month to this month
-      const lastMonthPl =
-        rows[0]?.current_value || startRow[0].current_value;
-      const monthPlDifference = lastValue - lastMonthPl;
-      const lastMonthPlPercent = (
-        (monthPlDifference * 100) /
-        lastMonthPl
-      ).toFixed(2);
-
-      win.webContents.executeJavaScript(`const lastMonthChange = document.getElementById("last-month-change");
-      lastMonthChange.innerHTML = ${monthPlDifference.toFixed(2)};
-      lastMonthChange.innerHTML = lastMonthChange.innerHTML + " "+"("+${lastMonthPlPercent}+"%)";        
-      lastMonthChange.style.color = "${monthPlDifference > 0 ? "green" : "red"}";
-      `);
-
-      const lastYearCurrentValue =
-        yearRow[0]?.current_value || startRow[0].current_value;
-      const yearPlDifference = (lastValue - lastYearCurrentValue).toFixed(2);
-      const yearPercent = (
-        (yearPlDifference * 100) /
-        lastYearCurrentValue
-      ).toFixed(2);
-      win.webContents.executeJavaScript(`const lastYearReturns = document.getElementById("1-year-returns");
-        lastYearReturns.innerHTML = ${yearPlDifference};
-        lastYearReturns.innerHTML = lastYearReturns.innerHTML + " "+"("+${yearPercent}+"%)";        
-        lastYearReturns.style.color = "${yearPlDifference > 0 ? "green" : "red"}";
-        `);
     } catch (error) {
       console.error("Error in did-finish-load:", error);
     }
@@ -296,8 +278,8 @@ Menu.setApplicationMenu(menu);
 
   ipcMain.on("weekly-data", async () => {
     try {
-      [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'week').format('YYYY-MM-DD')}'`);
-      populateCharts(rows);
+      const [rows] = await connection.query("SELECT * FROM daily_pl ORDER BY date ASC, id ASC");
+      populateCharts(getPeriodRows(rows, 1, "week"), rows);
     } catch (error) {
       console.error("Error in weekly-data:", error);
     }
@@ -305,8 +287,8 @@ Menu.setApplicationMenu(menu);
 
   ipcMain.on("monthly-data", async () => {
     try {
-      [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'month').format('YYYY-MM-DD')}'`);
-      populateCharts(rows);
+      const [rows] = await connection.query("SELECT * FROM daily_pl ORDER BY date ASC, id ASC");
+      populateCharts(getPeriodRows(rows, 1, "month"), rows);
     } catch (error) {
       console.error("Error in monthly-data:", error);
     }
@@ -314,8 +296,8 @@ Menu.setApplicationMenu(menu);
 
   ipcMain.on("quarterly-data", async () => {
     try {
-      [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(3, 'months').format('YYYY-MM-DD')}'`);
-      populateCharts(rows);
+      const [rows] = await connection.query("SELECT * FROM daily_pl ORDER BY date ASC, id ASC");
+      populateCharts(getPeriodRows(rows, 3, "months"), rows);
     } catch (error) {
       console.error("Error in quarterly-data:", error);
     }
@@ -323,8 +305,8 @@ Menu.setApplicationMenu(menu);
 
   ipcMain.on("yearly-data", async () => {
     try {
-      [rows] = await connection.query(`SELECT * FROM daily_pl WHERE date > '${dayjs().subtract(1, 'year').format('YYYY-MM-DD')}'`);
-      populateCharts(rows);
+      const [rows] = await connection.query("SELECT * FROM daily_pl ORDER BY date ASC, id ASC");
+      populateCharts(getPeriodRows(rows, 1, "year"), rows);
     } catch (error) {
       console.error("Error in yearly-data:", error);
     }
@@ -332,8 +314,8 @@ Menu.setApplicationMenu(menu);
 
   ipcMain.on("all-data", async () => {
     try {
-      [rows] = await connection.query("SELECT * FROM daily_pl");
-      populateCharts(rows);
+      const [rows] = await connection.query("SELECT * FROM daily_pl ORDER BY date ASC, id ASC");
+      populateCharts(rows, rows);
     } catch (error) {
       console.error("Error in all-data:", error);
     }
@@ -341,21 +323,24 @@ Menu.setApplicationMenu(menu);
 
   ipcMain.on("filterData", async (event, data) => {
     try {
-      [rows] = await connection.query("SELECT * FROM daily_pl");
-      rows = rows.filter((temp) => {
+      const [allRows] = await connection.query("SELECT * FROM daily_pl ORDER BY date ASC, id ASC");
+      const rows = allRows.filter((temp) => {
         return (
           dayjs(temp.date).isAfter(dayjs(data.startDate).subtract(1, "day")) &&
           dayjs(temp.date).isBefore(dayjs(data.endDate).add(1, "day"))
         );
       });
-      populateCharts(rows);
+      populateCharts(rows, allRows);
     } catch (error) {
       console.error("Error in filterData:", error);
     }
   });
 
-  function populateCharts(rows) {
+  function populateCharts(rows, allRows = rows) {
     try {
+      rows = sortDailyRows(rows);
+      if (rows.length === 0) return;
+
       win.webContents.executeJavaScript(`
       ctx = document.getElementById('current-chart').getContext('2d');
       void new Chart(ctx, {
@@ -368,7 +353,7 @@ Menu.setApplicationMenu(menu);
       ctx2 = document.getElementById('daily-chart').getContext('2d');
       void new Chart(ctx2, {
         type: 'bar',
-        data: ${JSON.stringify(getDailyPlDataForChart(rows))}
+        data: ${JSON.stringify(getDailyPlDataForChart(rows, allRows))}
       });
       `);
 

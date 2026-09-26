@@ -8,51 +8,132 @@
   <link rel="stylesheet" href="./assets/css/bootstrap.min.css" />
   <link rel="stylesheet" href="./index.css" />
   <script src="./assets/js/chart.min.js"></script>
+  <style>
+    body {
+      background: #f3f6fa;
+      color: #243247;
+    }
+
+    .consolidated-page {
+      max-width: 1600px;
+    }
+
+    .consolidated-chart-card,
+    .entry-card {
+      height: 100%;
+      padding: 1rem;
+      border: 1px solid #e4eaf1;
+      border-radius: 0.85rem;
+      background: #fff;
+      box-shadow: 0 0.25rem 1rem rgba(34, 56, 80, 0.06);
+    }
+
+    .allocation-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.8fr) repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+
+    .pie-chart-body {
+      height: 320px;
+    }
+
+    .portfolio-chart-body {
+      height: 360px;
+    }
+
+    .individual-chart-body {
+      height: 300px;
+    }
+
+    @media (max-width: 991.98px) {
+      .allocation-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .entry-card {
+        grid-column: 1 / -1;
+      }
+
+      .portfolio-chart-body,
+      .pie-chart-body,
+      .individual-chart-body {
+        height: 280px;
+      }
+    }
+
+    @media (max-width: 575.98px) {
+      .allocation-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .entry-card {
+        grid-column: auto;
+      }
+    }
+  </style>
 </head>
 
-<body style="background-color: whitesmoke;">
-  <div class="container">
-    <h1>Consolidated portfolio tracker</h1>
-    <div class="row mb-5">
-      <div class="col-md-3">
-        <form id="form" class="mb-3">
-          <div class="mb-3">
-            <label for="datepicker" class="form-label">Date</label>
-            <input type="month" class="form-control" id="datepicker" required />
-          </div>
-          <div class="mb-3">
-            <label for="scheme-value" class="form-label">Scheme</label>
-            <select id="scheme-value" class="form-control" required>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="cumulative-value-invested" class="form-label">Cumulative value invested</label>
-            <input type="number" class="form-control" id="cumulative-value-invested" required step="0.01" />
-          </div>
-          <div class="mb-3">
-            <label for="valuation" class="form-label">Valuation</label>
-            <input type="number" class="form-control" id="valuation" required step="0.01" />
-          </div>
+<body>
+  <main class="container-fluid consolidated-page py-4">
+    <header class="mb-4">
+      <h1 class="h2 mb-1">Consolidated portfolio tracker</h1>
+      <p class="text-muted mb-0">Track portfolio allocation and returns over time.</p>
+    </header>
+    <div class="allocation-grid mb-4">
+      <div>
+        <div class="entry-card">
+          <h2 class="h5 mb-3">Add monthly valuation</h2>
+          <form id="form" class="mb-0">
+            <div class="mb-3">
+              <label for="datepicker" class="form-label">Date</label>
+              <input type="month" class="form-control" id="datepicker" required />
+            </div>
+            <div class="mb-3">
+              <label for="scheme-value" class="form-label">Scheme</label>
+              <select id="scheme-value" class="form-control" required></select>
+            </div>
+            <div class="mb-3">
+              <label for="cumulative-value-invested" class="form-label">Cumulative value invested</label>
+              <input type="number" class="form-control" id="cumulative-value-invested" required step="0.01" />
+            </div>
+            <div class="mb-3">
+              <label for="valuation" class="form-label">Valuation</label>
+              <input type="number" class="form-control" id="valuation" required step="0.01" />
+            </div>
 
-          <button type="submit" class="btn btn-dark">Submit</button>
-        </form>
+            <button type="submit" class="btn btn-dark">Submit</button>
+          </form>
+        </div>
       </div>
-      <div class="col-md-2">
-        <canvas id="current-pie-chart"></canvas>
+      <div>
+        <section class="consolidated-chart-card" aria-label="Current value allocation">
+          <div class="pie-chart-body">
+            <canvas id="current-pie-chart" aria-label="Current portfolio allocation by scheme"></canvas>
+          </div>
+        </section>
       </div>
-
-      <div class="col-md-2">
-        <canvas id="invested-pie-chart"></canvas>
-      </div>
-      <div class="col-md-5 p-4">
-        <canvas id="chart"></canvas>
+      <div>
+        <section class="consolidated-chart-card" aria-label="Invested value allocation">
+          <div class="pie-chart-body">
+            <canvas id="invested-pie-chart" aria-label="Invested portfolio allocation by scheme"></canvas>
+          </div>
+        </section>
       </div>
     </div>
 
-    <div>
+    <section class="consolidated-chart-card mb-5">
+      <h2 class="h5 mb-3">Portfolio return by month</h2>
+      <div class="portfolio-chart-body">
+        <canvas id="chart" aria-label="Portfolio return percentage by month"></canvas>
+      </div>
+    </section>
+
+    <section aria-label="Returns by investment scheme">
+      <h2 class="h4 mb-3">Returns by scheme</h2>
       <div class="row" id="row"></div>
-    </div>
-  </div>
+    </section>
+  </main>
   <script src="consolidatedRenderer.js"></script>
 </body>
 

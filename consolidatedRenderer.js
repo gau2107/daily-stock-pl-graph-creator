@@ -2,7 +2,14 @@ const { createTursoClient } = require("./src/db/turso");
 const dotenv = require("dotenv");
 const path = require("path");
 const dayjs = require("dayjs");
-const { getRandomColor, colors } = require("./src/utils/utils");
+
+const toNumber = (value) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+};
+
+const formatPercent = (value, total) =>
+  total > 0 ? `${((value * 100) / total).toFixed(1)}%` : "0.0%";
 
 const envFilePath =
   process.env.NODE_ENV === "development" ? ".env.local" : ".env.production";
@@ -90,40 +97,57 @@ async function getData() {
   }
 
   generateChart(rows);
-  generatePieChart(rows, newRows.length);
-  let maxLen = 0;
-  let schemeArray = groupedByScheme(rows);
-  for (let i = 0; i < newRows.length; i++) {
-    maxLen = schemeArray[i].data.length > maxLen ? schemeArray[i].data.length : maxLen;
-    getIndividualChart(schemeArray[i]);
-  }
+  generatePieChart(rows);
+  groupedByScheme(rows).forEach(getIndividualChart);
 }
 
 function generateChart(rows) {
-  rows = groupedByMonth(rows);
-  let labels = rows.map(r => dayjs(r.month).format(`MMM YYYY`));
-  let values = rows.map(r => ((r.totalProfitValue * 100) / (r.totalInvestedValue || 1)).toFixed(2));
+  const monthlyRows = groupedByMonth(rows);
+  const labels = monthlyRows.map((row) => dayjs(row.month).format("MMM YYYY"));
+  const values = monthlyRows.map((row) =>
+    row.totalInvestedValue
+      ? (row.totalProfitValue * 100) / row.totalInvestedValue
+      : 0
+  );
   const data = {
-    labels: labels,
+    labels,
     datasets: [
       {
-        label: 'Cumulative Profit %',
+        label: "Portfolio return",
         data: values,
         borderColor: "rgba(39, 174, 96, 1)",
-        backgroundColor: "rgba(39, 174, 96, .5)",
-        borderWidth: 1,
+        backgroundColor: "rgba(39, 174, 96, .16)",
+        pointBackgroundColor: values.map((value) =>
+          value < 0 ? "rgba(220, 53, 69, 1)" : "rgba(39, 174, 96, 1)"
+        ),
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        fill: true,
+        tension: 0.3,
       },
     ],
   };
   const config = {
-    type: "bar",
-    data: data,
+    type: "line",
+    data,
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: "top",
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context) => `Return: ${Number(context.raw).toFixed(2)}%`,
+          },
         },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: "Return" },
+          ticks: { callback: (value) => `${value}%` },
+          grid: { color: "rgba(0, 0, 0, .06)" },
+        },
+        x: { grid: { display: false } },
       },
     },
   };
@@ -132,77 +156,98 @@ function generateChart(rows) {
 }
 
 function getIndividualChart(obj) {
-  let labels = obj.data.map(r => dayjs(r.date).format(`MMM YYYY`));
-  let values = obj.data.map(r => ((r.p_l * 100) / r.invested_value).toFixed(2));
+  const labels = obj.data.map((row) => dayjs(row.date).format("MMM YYYY"));
+  const values = obj.data.map((row) => {
+    const investedValue = toNumber(row.invested_value);
+    return investedValue ? (toNumber(row.p_l) * 100) / investedValue : 0;
+  });
   const data = {
-    labels: labels,
+    labels,
     datasets: [
       {
-        label: ``,
+        label: `${obj.title} return`,
         data: values,
-        borderWidth: 1,
-        hoverOffset: 1,
-        type: "line",
-        backgroundColor: "rgba(173, 216, 300, 1)"
-      },
-      {
-        label: `${obj.title} %`,
-        data: values,
-        hoverOffset: 5,
-        type: "bar",
-        backgroundColor: "rgba(173, 216, 300, 0.7)",
-        borderColor: "rgba(173, 216, 300, 1)",
-        borderWidth: 1
+        borderColor: "rgba(52, 120, 246, 1)",
+        backgroundColor: "rgba(52, 120, 246, .14)",
+        pointBackgroundColor: values.map((value) =>
+          value < 0 ? "rgba(220, 53, 69, 1)" : "rgba(52, 120, 246, 1)"
+        ),
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        fill: true,
+        tension: 0.3,
       }
     ],
   };
   const config = {
-    data: data,
+    type: "line",
+    data,
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: "top",
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context) => `Return: ${Number(context.raw).toFixed(2)}%`,
+          },
         },
+      },
+      scales: {
+        y: {
+          title: { display: true, text: "Return" },
+          ticks: { callback: (value) => `${value}%` },
+          grid: { color: "rgba(0, 0, 0, .06)" },
+        },
+        x: { grid: { display: false } },
       },
     },
   };
 
   const div = document.createElement("div");
-  div.className = "col-md-6";
+  div.className = "col-12 col-xl-6 mb-4";
   const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  new Chart(ctx, config);
+  const card = document.createElement("div");
+  card.className = "consolidated-chart-card";
+  const title = document.createElement("h3");
+  title.className = "h6 mb-3";
+  title.textContent = obj.title;
+  const chartBody = document.createElement("div");
+  chartBody.className = "individual-chart-body";
+  chartBody.appendChild(canvas);
+  card.append(title, chartBody);
   const container = document.getElementById("row");
   container.appendChild(div);
-  div.appendChild(canvas);
+  div.appendChild(card);
+  new Chart(canvas, config);
 }
 
-function generatePieChart(rows, totalInvestmentSchemes) {
-  const elements = rows.slice(-totalInvestmentSchemes);
-
-  let labels = elements.map(r => r.investment_scheme);
-  let currentValues = elements.map(r => r.current_value);
-
-  let bgColors = [];
-  let colors = [];
-  for(let i = 0; i < currentValues.length; i++) {
-    colors.push(getRandomColor());
-    bgColors.push("black");
-  }
-  let totalCurrentValue = currentValues.reduce((sum, item) => sum + item, 0);
-  let totalCurrentProfit = elements.reduce((sum, item) => sum + Number(item.p_l || 0), 0);
-  let totalCurrentReturn = totalCurrentValue - totalCurrentProfit ? (totalCurrentProfit * 100 / (totalCurrentValue - totalCurrentProfit)).toFixed(2) : "0.00";
+function generatePieChart(rows) {
+  const latestByScheme = new Map();
+  rows.forEach((row) => latestByScheme.set(row.investment_scheme, row));
+  const elements = Array.from(latestByScheme.values());
+  const labels = elements.map((row) => row.investment_scheme);
+  const currentValues = elements.map((row) => toNumber(row.current_value));
+  const investedValues = elements.map((row) => toNumber(row.invested_value));
+  const backgroundColors = elements.map((_, index) => `hsl(${(index * 67) % 360} 62% 58%)`);
+  const borderColors = elements.map((_, index) => `hsl(${(index * 67) % 360} 62% 38%)`);
+  const totalCurrentValue = currentValues.reduce((sum, value) => sum + value, 0);
+  const totalInvestedValue = investedValues.reduce((sum, value) => sum + value, 0);
+  const totalCurrentProfit = elements.reduce((sum, item) => sum + toNumber(item.p_l), 0);
+  const totalCurrentReturn = totalInvestedValue
+    ? ((totalCurrentProfit * 100) / totalInvestedValue).toFixed(2)
+    : "0.00";
+  const formatMoney = (value) => `₹${toNumber(value).toLocaleString("en-IN")}`;
   const currentChartData = {
-    labels: labels,
+    labels,
     datasets: [
       {
-        label: 'Current Value',
+        label: "Current value",
         data: currentValues,
-        borderColor: bgColors,
-        backgroundColor: colors,
-        hoverOffset: 5,
+        borderColor: borderColors,
+        backgroundColor: backgroundColors,
+        borderWidth: 2,
+        hoverOffset: 8,
       }
     ],
   };
@@ -215,25 +260,42 @@ function generatePieChart(rows, totalInvestmentSchemes) {
       plugins: {
         title: {
           display: true,
-          text: `Current Value ₹${totalCurrentValue.toLocaleString("en-IN")} (${totalCurrentReturn}%)`
+          text: `Current value ₹${totalCurrentValue.toLocaleString("en-IN")} · return ${totalCurrentReturn}%`,
         },
         legend: {
           position: "bottom",
+          labels: {
+            usePointStyle: true,
+            padding: 12,
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const item = elements[context.dataIndex];
+              const value = toNumber(context.raw);
+              const share = formatPercent(value, totalCurrentValue);
+              const investedValue = toNumber(item.invested_value);
+              const returnPercent = investedValue
+                ? ((toNumber(item.p_l) * 100) / investedValue).toFixed(2)
+                : "0.00";
+              return `${context.label}: ${formatMoney(value)} (${share} of portfolio, ${returnPercent}% return)`;
+            },
+          },
         },
       },
     },
   };
-  let investedValues = elements.map(r => r.invested_value);
-  let totalInvestedValue = investedValues.reduce((a, b) => a + b, 0);
   const investedChartData = {
-    labels: labels,
+    labels,
     datasets: [
       {
-        label: `Current Value`,
-        borderColor: bgColors,
-        backgroundColor: colors,
+        label: "Invested value",
+        borderColor: borderColors,
+        backgroundColor: backgroundColors,
         data: investedValues,
-        hoverOffset: 5,
+        borderWidth: 2,
+        hoverOffset: 8,
       }
     ],
   };
@@ -246,10 +308,27 @@ function generatePieChart(rows, totalInvestmentSchemes) {
       plugins: {
         title: {
           display: true,
-          text: `Invested Value ₹${totalInvestedValue.toLocaleString("en-IN")} (return ${totalCurrentReturn}%)`
+          text: `Invested value ₹${totalInvestedValue.toLocaleString("en-IN")} · return ${totalCurrentReturn}%`,
         },
         legend: {
           position: "bottom",
+          labels: {
+            usePointStyle: true,
+            padding: 12,
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const value = toNumber(context.raw);
+              const item = elements[context.dataIndex];
+              const investedValue = toNumber(item.invested_value);
+              const returnPercent = investedValue
+                ? ((toNumber(item.p_l) * 100) / investedValue).toFixed(2)
+                : "0.00";
+              return `${context.label}: ${formatMoney(value)} (${formatPercent(value, totalInvestedValue)} of invested total, ${returnPercent}% return)`;
+            },
+          },
         },
       },
     },
@@ -262,7 +341,7 @@ function generatePieChart(rows, totalInvestmentSchemes) {
 
 const groupedByMonth = (data) => {
   const groupedByMonthMap = data.reduce((result, item) => {
-    const month = item.date; // Extracting month from date
+    const month = item.date;
 
     if (!result.has(month)) {
       result.set(month, []);
@@ -273,29 +352,26 @@ const groupedByMonth = (data) => {
   }, new Map());
 
   return Array.from(groupedByMonthMap).map(([month, data]) => {
-    const totalInvestedValue = data.reduce((sum, item) => sum + item.invested_value, 0);
-    const totalCurrentValue = data.reduce((sum, item) => sum + item.current_value, 0);
-    const totalProfitValue = data.reduce((sum, item) => sum + item.p_l, 0);
-
-    month = month;
+    const totalInvestedValue = data.reduce((sum, item) => sum + toNumber(item.invested_value), 0);
+    const totalCurrentValue = data.reduce((sum, item) => sum + toNumber(item.current_value), 0);
+    const totalProfitValue = data.reduce((sum, item) => sum + toNumber(item.p_l), 0);
 
     return { month, data, totalInvestedValue, totalCurrentValue, totalProfitValue };
   });
 };
 
 const groupedByScheme = (data) => {
-  let groupedByScheme = data.reduce((result, item) => {
+  const schemes = data.reduce((result, item) => {
     if (!result[item.investment_scheme]) {
       result[item.investment_scheme] = [];
     }
     result[item.investment_scheme].push(item);
     return result;
   }, {});
-  return Object.entries(groupedByScheme).map(([title, data]) => {
+  return Object.entries(schemes).map(([title, data]) => {
     return { title, data };
   });
-
-}
+};
 
 const form = document.getElementById("form");
 form.addEventListener("submit", async (event) => {
